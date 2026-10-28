@@ -183,4 +183,3 @@ Truy cập hệ thống tại: **[http://127.0.0.1:8000](http://127.0.0.1:8000)*
    `Gợi ý = Dự báo + Tồn tối thiểu - Tồn khả dụng - Đã duyệt chưa về`.
 5. Vào **Tối ưu OR-Tools**: Nhập hạn mức ngân sách (ví dụ: `50.000.000 đ`) &rarr; Bấm **Chạy tối ưu hóa**.
 6. Hệ thống hiển thị kế hoạch phân bổ số lượng nhập tối ưu từng sản phẩm nhằm tối đa hóa lợi nhuận kỳ vọng dưới hạn mức ngân sách được cấp.
-

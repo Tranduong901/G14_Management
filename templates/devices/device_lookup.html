@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Tra cứu bảo hành & IMEI - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold mb-1"><i class="bi bi-shield-check text-primary me-2"></i>Tra cứu bảo hành & Serial/IMEI</h4>
+            <p class="text-muted small">Nhập số Serial/IMEI hoặc số điện thoại khách hàng để kiểm tra thời hạn và xuất xứ (FR-11)</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <form method="get" class="d-flex gap-2">
+                    <input type="text" name="q" class="form-control form-control-lg" placeholder="Nhập IMEI hoặc số điện thoại khách hàng..." value="{{ query }}" autofocus required>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-search me-1"></i> Tra cứu</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results -->
+        {% if query %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Kết quả tìm kiếm cho: "{{ query }}"</h6>
+                <span class="badge bg-secondary">{{ results|length }} kết quả</span>
+            </div>
+            <div class="card-body p-0">
+                {% for item in results %}
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-1">{{ item.product.name }}</h6>
+                        <div class="small mb-1">
+                            Serial/IMEI: <code>{{ item.serial_number }}</code> | 
+                            Trạng thái: 
+                            {% if item.status == 'SOLD' %}<span class="badge bg-primary">Đã bán</span>
+                            {% elif item.status == 'IN_STOCK' %}<span class="badge bg-success">Trong kho</span>
+                            {% elif item.status == 'DEFECTIVE' %}<span class="badge bg-danger">Đang bảo hành/lỗi</span>
+                            {% else %}<span class="badge bg-secondary">{{ item.get_status_display }}</span>{% endif %}
+                        </div>
+                        <div class="small text-muted">
+                            {% if item.sales_order and item.sales_order.customer %}
+                            Khách hàng: <strong>{{ item.sales_order.customer.name }}</strong> ({{ item.sales_order.customer.phone }}) | Đơn bán: <code>{{ item.sales_order.code }}</code>
+                            {% else %}
+                            Chưa có thông tin người mua (Máy chưa bán).
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-2">
+                            {% if item.is_warranty_valid %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2">
+                                <i class="bi bi-check-circle-fill"></i> Còn hạn BH đến {{ item.warranty_end_date|date:"d/m/Y" }}
+                            </span>
+                            {% elif item.warranty_end_date %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2">
+                                <i class="bi bi-x-circle-fill"></i> Hết hạn BH ({{ item.warranty_end_date|date:"d/m/Y" }})
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border">Chưa kích hoạt</span>
+                            {% endif %}
+                        </div>
+                        {% if item.status == 'SOLD' %}
+                        <a href="{% url 'devices:warranty_create' %}?serial={{ item.serial_number }}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-shield-plus me-1"></i> Tiếp nhận BH
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-search fs-3 d-block mb-2"></i>
+                    Không tìm thấy thiết bị nào khớp với từ khóa "{{ query }}".
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Gợi ý nhập hàng - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-lightbulb me-2 text-primary"></i>Gợi ý số lượng nhập hàng (DSS)</h4>
+        <p class="text-muted small mb-0">Công thức: <code>Số lượng gợi ý = Dự báo + Tồn tối thiểu - Tồn khả dụng - Số lượng đã duyệt chưa về</code> (BR20, BR22)</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if filter_needed %}
+        <a href="?needed_only=0" class="btn btn-outline-secondary btn-sm">Hiện tất cả sản phẩm</a>
+        {% else %}
+        <a href="?needed_only=1" class="btn btn-outline-primary btn-sm">Chỉ hiện hàng cần nhập</a>
+        {% endif %}
+        <a href="{% url 'dss:optimizer' %}" class="btn btn-primary fw-semibold shadow-sm">
+            <i class="bi bi-cpu me-1"></i> Tối ưu ngân sách (OR-Tools)
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info py-2 small mb-4">
+    <i class="bi bi-info-circle me-1"></i> <strong>Quy tắc BR20 & BR22:</strong> Gợi ý nhập hàng của hệ thống hoàn toàn chỉ là khuyến nghị tham khảo. Hệ thống không tự động tạo phiếu nhập hoặc tự ý thay đổi dữ liệu kho. Người quản lý hoặc nhân viên kho chủ động bấm "Tạo đề nghị nhập" để sinh chứng từ ở trạng thái Nháp.
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã SP</th>
+                    <th>Tên sản phẩm</th>
+                    <th class="text-center">Dự báo (F)</th>
+                    <th class="text-center">Tồn tối thiểu (Min)</th>
+                    <th class="text-center">Tồn khả dụng (Stock)</th>
+                    <th class="text-center">Đã duyệt chưa nhập (On-order)</th>
+                    <th class="text-center table-primary">SL Đề xuất nhập</th>
+                    <th class="text-end">Ước tính vốn cần</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in suggestions %}
+                <tr {% if s.suggested_quantity > 0 %}class="table-warning bg-opacity-10"{% endif %}>
+                    <td><code>{{ s.product.code }}</code></td>
+                    <td>
+                        <strong>{{ s.product.name }}</strong>
+                        {% if s.is_low_stock %}
+                        <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Tồn thấp</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if s.has_forecast %}{{ s.forecast }}{% else %}<span class="text-muted">0 (Chưa đủ data)</span>{% endif %}
+                    </td>
+                    <td class="text-center text-muted">{{ s.min_stock }}</td>
+                    <td class="text-center fw-bold">{{ s.available_stock }}</td>
+                    <td class="text-center text-muted">{{ s.approved_on_order }}</td>
+                    <td class="text-center table-primary">
+                        {% if s.suggested_quantity > 0 %}
+                        <span class="badge bg-primary py-2 px-3 fs-6">{{ s.suggested_quantity }}</span>
+                        {% else %}
+                        <span class="badge bg-light text-muted border">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold text-primary">{{ s.estimated_cost|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end">
+                        {% if s.suggested_quantity > 0 or s.is_low_stock %}
+                        <a href="{% url 'scm:request_create' %}?product={{ s.product.pk }}&qty={{ s.suggested_quantity }}" class="btn btn-sm btn-outline-success fw-semibold" title="Tạo đề nghị nhập hàng (SCM)">
+                            <i class="bi bi-plus-circle me-1"></i> Tạo đề nghị Nháp
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">Tồn an toàn</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Hiện tại tất cả sản phẩm đều đạt mức tồn an toàn.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="7" class="text-end fw-bold">Tổng ước tính ngân sách cần cho các mặt hàng gợi ý:</td>
+                    <td class="text-end fw-bold text-danger fs-5">{{ total_est_cost|floatformat:0|intcomma }} đ</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

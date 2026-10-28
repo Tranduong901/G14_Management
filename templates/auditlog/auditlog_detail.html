@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết nhật ký #{{ log_item.id }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'auditlog:auditlog_list' %}">Nhật ký hệ thống</a></li>
+                <li class="breadcrumb-item active">Bản ghi #{{ log_item.id }}</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0">Chi tiết nhật ký: #{{ log_item.id }}</h4>
+    </div>
+    <a href="{% url 'auditlog:auditlog_list' %}" class="btn btn-secondary">Quay lại danh sách</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Thông tin hành động</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted" style="width: 35%;">Thời điểm:</th><td>{{ log_item.created_at|date:"d/m/Y H:i:s" }}</td></tr>
+                    <tr><th class="text-muted">Người thực hiện:</th><td><strong>{{ log_item.user.username|default:"Hệ thống" }}</strong></td></tr>
+                    <tr><th class="text-muted">Hành động:</th><td><span class="badge bg-primary">{{ log_item.get_action_display }}</span></td></tr>
+                    <tr><th class="text-muted">Phân hệ:</th><td><code>{{ log_item.app_label }}</code></td></tr>
+                    <tr><th class="text-muted">Bảng dữ liệu:</th><td><code>{{ log_item.model_name }}</code></td></tr>
+                    <tr><th class="text-muted">ID đối tượng:</th><td><code>{{ log_item.object_id }}</code></td></tr>
+                    <tr><th class="text-muted">Đối tượng:</th><td><strong>{{ log_item.object_repr }}</strong></td></tr>
+                    <tr><th class="text-muted">Địa chỉ IP:</th><td><code>{{ log_item.ip_address|default:"127.0.0.1" }}</code></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-code-slash me-2 text-primary"></i>Dữ liệu thay đổi (JSON)</h6>
+            </div>
+            <div class="card-body">
+                {% if log_item.changes_json %}
+                <pre class="bg-light p-3 rounded small text-dark mb-0" style="max-height: 350px; overflow-y: auto;"><code>{{ log_item.changes_json }}</code></pre>
+                {% else %}
+                <div class="text-muted small">Không có chi tiết dữ liệu thay đổi bổ sung.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

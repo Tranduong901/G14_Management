@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Đề nghị nhập hàng {{ req_obj.code }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'scm:request_list' %}">Đề nghị nhập hàng</a></li>
+                <li class="breadcrumb-item active">{{ req_obj.code }}</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0">Đề nghị: {{ req_obj.code }}</h4>
+    </div>
+    <div>
+        <a href="{% url 'scm:request_list' %}" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Details -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>Danh sách mặt hàng đề xuất nhập</h6>
+                <span class="badge bg-primary">{{ details|length }} sản phẩm</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Sản phẩm</th>
+                            <th>Nhà cung cấp đề xuất</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá dự kiến</th>
+                            <th class="text-end">Tổng tiền dự kiến</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in details %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ d.product.name }}</strong>
+                                <div class="small text-muted">Mã: <code>{{ d.product.code }}</code></div>
+                            </td>
+                            <td>{{ d.suggested_supplier.name|default:"--" }}</td>
+                            <td class="text-center fw-bold">{{ d.requested_quantity }}</td>
+                            <td class="text-end">{{ d.estimated_price|floatformat:0|intcomma }} đ</td>
+                            <td class="text-end fw-bold">{{ d.estimated_total|floatformat:0|intcomma }} đ</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if req_obj.rejection_reason or req_obj.notes %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                {% if req_obj.rejection_reason %}
+                <h6 class="fw-bold text-danger small">LÝ DO TỪ CHỐI PHÊ DUYỆT</h6>
+                <p class="text-danger mb-2">{{ req_obj.rejection_reason }}</p>
+                {% endif %}
+                {% if req_obj.notes %}
+                <h6 class="fw-bold text-muted small">GHI CHÚ KẾ HOẠCH</h6>
+                <p class="mb-0">{{ req_obj.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- If converted, show linked receipt -->
+        {% if linked_receipt %}
+        <div class="card border-0 shadow-sm border-start border-4 border-success mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i>Đã chuyển thành Phiếu nhập hàng</h6>
+                        <div>Mã phiếu nhập: <strong>{{ linked_receipt.code }}</strong> - Trạng thái: <span class="badge bg-secondary">{{ linked_receipt.get_status_display }}</span></div>
+                    </div>
+                    <a href="{% url 'purchasing:receipt_detail' linked_receipt.pk %}" class="btn btn-outline-success btn-sm">Xem phiếu nhập &rarr;</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Status & Workflow Actions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Trạng thái phê duyệt</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width: 45%;">Trạng thái:</th>
+                        <td>
+                            {% if req_obj.status == 'APPROVED' %}<span class="badge bg-success">Đã phê duyệt</span>
+                            {% elif req_obj.status == 'PENDING' %}<span class="badge bg-warning text-dark">Chờ duyệt</span>
+                            {% elif req_obj.status == 'DRAFT' %}<span class="badge bg-secondary">Nháp</span>
+                            {% elif req_obj.status == 'COMPLETED' %}<span class="badge bg-info text-dark">Đã chuyển phiếu nhập</span>
+                            {% else %}<span class="badge bg-danger">Từ chối</span>{% endif %}
+                        </td>
+                    </tr>
+                    <tr><th class="text-muted">Người lập:</th><td><strong>{{ req_obj.requester.username|default:"--" }}</strong></td></tr>
+                    <tr><th class="text-muted">Thời điểm lập:</th><td>{{ req_obj.created_at|date:"d/m/Y H:i" }}</td></tr>
+                    {% if req_obj.approver %}
+                    <tr><th class="text-muted">Người duyệt:</th><td>{{ req_obj.approver.username }}</td></tr>
+                    <tr><th class="text-muted">Thời điểm duyệt:</th><td>{{ req_obj.approved_at|date:"d/m/Y H:i" }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Workflow Action Box -->
+        <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body p-3">
+                {% if req_obj.status == 'DRAFT' and is_kho %}
+                <h6 class="fw-bold mb-2">Gửi đề nghị lên Quản lý</h6>
+                <p class="small text-muted mb-3">Đề nghị nhập hàng sau khi gửi duyệt sẽ chuyển sang trạng thái 'Chờ duyệt' để Ban quản lý xem xét và phê duyệt (BR19).</p>
+                <form method="post" action="{% url 'scm:request_submit' req_obj.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-send me-1"></i> Gửi duyệt đề nghị
+                    </button>
+                </form>
+
+                {% elif req_obj.status == 'PENDING' and is_ql %}
+                <h6 class="fw-bold mb-2">Phê duyệt đề nghị nhập hàng</h6>
+                <p class="small text-muted mb-3">Xem xét số lượng và nhà cung cấp đề xuất để phê duyệt hoặc từ chối kèm lý do (BR19).</p>
+                <form method="post" action="{% url 'scm:request_approve' req_obj.pk %}" class="mb-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100 fw-semibold mb-2">
+                        <i class="bi bi-check-lg me-1"></i> Phê duyệt đề nghị
+                    </button>
+                </form>
+
+                <button type="button" class="btn btn-outline-danger w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle me-1"></i> Từ chối đề nghị
+                </button>
+
+                <!-- Reject Modal -->
+                <div class="modal fade" id="rejectModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" action="{% url 'scm:request_reject' req_obj.pk %}">
+                                {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold">Từ chối đề nghị nhập hàng</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Lý do từ chối (bắt buộc):</label>
+                                        {{ reject_form.rejection_reason }}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {% elif req_obj.status == 'APPROVED' and is_kho and not linked_receipt %}
+                <h6 class="fw-bold mb-2 text-success"><i class="bi bi-box-arrow-in-down me-1"></i>Chuyển thành Phiếu nhập hàng</h6>
+                <p class="small text-muted mb-3">Đề nghị đã được duyệt. Tạo phiếu nhập kho kế thừa danh sách hàng hóa và nhà cung cấp đã được duyệt (BR19).</p>
+                <form method="post" action="{% url 'scm:request_convert' req_obj.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Chuyển thành Phiếu nhập
+                    </button>
+                </form>
+
+                {% else %}
+                <div class="text-muted small text-center">Không có hành động bổ sung nào cho trạng thái này.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Lập bút toán đảo - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold text-warning"><i class="bi bi-arrow-repeat me-2"></i>Lập bút toán đảo điều chỉnh sổ quỹ</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning py-2 small mb-4">
+                    <i class="bi bi-exclamation-triangle me-1"></i> <strong>Nguyên tắc bất biến của sổ quỹ (BR17):</strong> Bút toán đã ghi sổ tuyệt đối không được sửa hoặc xóa trực tiếp. Mọi điều chỉnh phải được thực hiện bằng bút toán đảo (ngược chiều thu/chi) kèm theo lý do bắt buộc và lưu nhật ký người thực hiện.
+                </div>
+
+                <div class="card mb-4 bg-light border-0">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold small text-muted">BÚT TOÁN GỐC ĐƯỢC ĐIỀU CHỈNH:</h6>
+                        <div>Mã bút toán: <strong>{{ original_entry.code }}</strong></div>
+                        <div>Loại: <span class="badge bg-secondary">{{ original_entry.get_transaction_type_display }}</span></div>
+                        <div>Số tiền: <strong class="fs-5 text-primary">{{ original_entry.amount|floatformat:0|intcomma }} đ</strong></div>
+                        <div>Phương thức: {{ original_entry.get_payment_method_display }}</div>
+                        <div class="small text-muted mt-1">Lý do gốc: {{ original_entry.reason }}</div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Lý do lập bút toán đảo (Bắt buộc) <span class="text-danger">*</span></label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}<div class="text-danger small">{{ form.reason.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="pt-3 border-top">
+                        <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold" onclick="return confirm('Xác nhận lập bút toán đảo cho chứng từ này?');">
+                            <i class="bi bi-check-lg me-1"></i> Xác nhận lập bút toán đảo
+                        </button>
+                        <a href="{% url 'finance:cash_ledger_list' %}" class="btn btn-outline-secondary ms-2">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

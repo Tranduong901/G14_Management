@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Hồ sơ cá nhân - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-primary"></i>Thông tin tài khoản</h5>
+                <span class="badge role-badge-{{ user_obj.role }} py-2 px-3">{{ user_obj.get_role_display }}</span>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Tên đăng nhập</label>
+                        <input type="text" class="form-control bg-light" value="{{ user_obj.username }}" readonly>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Họ đệm</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ user_obj.first_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tên</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ user_obj.last_name }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ user_obj.email }}">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Số điện thoại</label>
+                        <input type="text" name="phone" class="form-control" value="{{ user_obj.phone }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                    </button>
+                    <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-secondary ms-2">Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-plus me-2 text-primary"></i>{{ title }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ghi chú kế hoạch nhập hàng</label>
+                        {{ form.notes }}
+                    </div>
+
+                    <h6 class="fw-bold text-muted mb-3 border-bottom pb-2">DANH SÁCH MẶT HÀNG ĐỀ XUẤT NHẬP</h6>
+                    {{ formset.management_form }}
+                    <div id="formsetContainer">
+                        {% for f in formset %}
+                        <div class="row g-2 mb-3 align-items-center formset-row p-3 bg-light rounded-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Sản phẩm</label>
+                                {{ f.product }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">NCC đề xuất</label>
+                                {{ f.suggested_supplier }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold">Số lượng đề xuất</label>
+                                {{ f.requested_quantity }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Đơn giá dự kiến (VNĐ)</label>
+                                {{ f.estimated_price }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="pt-3 border-top d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Lưu đề nghị (Nháp)
+                        </button>
+                        <a href="{% url 'scm:request_list' %}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Tối ưu nhập hàng OR-Tools - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'dss:suggestions' %}">Gợi ý nhập hàng</a></li>
+                <li class="breadcrumb-item active">Tối ưu hóa OR-Tools</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0"><i class="bi bi-cpu me-2 text-primary"></i>Mô hình tối ưu hóa phân bổ ngân sách nhập hàng (Google OR-Tools)</h4>
+        <p class="text-muted small mb-0">Ứng dụng Quy hoạch tuyến tính số nguyên (MIP - Mixed-Integer Programming) để tối đa hóa lợi nhuận kỳ vọng dưới hạn mức vốn</p>
+    </div>
+    <a href="{% url 'dss:suggestions' %}" class="btn btn-secondary">Quay lại gợi ý</a>
+</div>
+
+<!-- Input Form -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Hạn mức ngân sách dành cho đợt nhập hàng này (VNĐ):</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-cash"></i></span>
+                    <input type="number" name="budget" class="form-control form-control-lg" value="{{ budget|floatformat:0 }}" min="1000000" step="5000000" required>
+                    <span class="input-group-text">VNĐ</span>
+                </div>
+                <div class="form-text small">VD: 50.000.000 đ hoặc 100.000.000 đ hoặc 200.000.000 đ</div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold shadow-sm">
+                    <i class="bi bi-lightning-charge me-1"></i> Chạy tối ưu hóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+            <div class="text-muted small fw-semibold">TRẠNG THÁI BÀI TOÁN TỐI ƯU</div>
+            <div class="fs-4 fw-bold {% if result.status == 'OPTIMAL' %}text-success{% else %}text-primary{% endif %}">
+                <i class="bi bi-check-circle-fill me-1"></i> {{ result.status }}
+            </div>
+            <div class="small text-muted mt-1">Google OR-Tools MIP Solver (SCIP/CBC)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+            <div class="text-muted small fw-semibold">TỔNG VỐN SỬ DỤNG / HẠN MỨC</div>
+            <div class="fs-4 fw-bold text-primary">{{ result.total_cost|floatformat:0|intcomma }} đ</div>
+            <div class="small text-muted mt-1">Hiệu suất dùng vốn: <strong>{{ result.budget_utilization }}%</strong> trên hạn mức {{ result.budget_limit|floatformat:0|intcomma }} đ</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white border-start border-4 border-success">
+            <div class="text-muted small fw-semibold">LỢI NHUẬN GỘP KỲ VỌNG TỐI ĐA</div>
+            <div class="fs-4 fw-bold text-success">{{ result.expected_profit|floatformat:0|intcomma }} đ</div>
+            <div class="small text-success mt-1">Mục tiêu tối ưu hóa được thỏa mãn</div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2 text-primary"></i>Kế hoạch nhập hàng tối ưu được đề xuất</h6>
+        <span class="badge bg-primary">{{ result.plan|length }} sản phẩm được chọn</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Mã SP</th>
+                    <th>Tên sản phẩm</th>
+                    <th class="text-center table-primary">Số lượng nhập tối ưu</th>
+                    <th class="text-end">Đơn giá vốn</th>
+                    <th class="text-end">Tổng chi phí vốn</th>
+                    <th class="text-end">Lợi nhuận đơn vị</th>
+                    <th class="text-end text-success">Tổng LN kỳ vọng</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in result.plan %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><code>{{ item.product.code }}</code></td>
+                    <td class="fw-bold">{{ item.product.name }}</td>
+                    <td class="text-center table-primary">
+                        <span class="badge bg-primary fs-6 py-2 px-3">{{ item.optimal_qty }} {{ item.product.unit }}</span>
+                    </td>
+                    <td class="text-end">{{ item.unit_cost|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end fw-bold text-dark">{{ item.total_cost|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end text-muted">{{ item.unit_profit|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end fw-bold text-success">{{ item.total_profit|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end">
+                        <a href="{% url 'scm:request_create' %}?product={{ item.product.pk }}&qty={{ item.optimal_qty }}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-cart-plus me-1"></i> Lập đề nghị
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Ngân sách không đủ hoặc không có sản phẩm nào thỏa mãn điều kiện bài toán.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="5" class="text-end fw-bold">Tổng cộng:</td>
+                    <td class="text-end fw-bold text-primary fs-5">{{ result.total_cost|floatformat:0|intcomma }} đ</td>
+                    <td></td>
+                    <td class="text-end fw-bold text-success fs-5">{{ result.expected_profit|floatformat:0|intcomma }} đ</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

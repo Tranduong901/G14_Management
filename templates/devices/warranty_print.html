@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Phiếu bảo hành - {{ claim.code }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; padding: 40px; }
+        .voucher-box { max-width: 800px; margin: auto; }
+        .header-title { color: #0f172a; font-weight: 800; }
+        @media print {
+            body { padding: 0; }
+            .btn-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="voucher-box">
+    <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+        <div>
+            <h2 class="header-title mb-1">G14 MANAGEMENT</h2>
+            <div class="text-muted small">Trung tâm Chăm sóc khách hàng & Bảo hành kỹ thuật</div>
+            <div class="text-muted small">Địa chỉ: 123 Cầu Giấy, TP. Hà Nội | Hotline BH: 1900 1414</div>
+        </div>
+        <div class="text-end">
+            <h4 class="text-danger fw-bold mb-1">PHIẾU TIẾP NHẬN BẢO HÀNH</h4>
+            <div>Mã phiếu: <strong>{{ claim.code }}</strong></div>
+            <div class="text-muted small">Ngày tiếp nhận: {{ claim.received_date|date:"d/m/Y" }}</div>
+            <div class="mt-2 btn-print">
+                <button onclick="window.print()" class="btn btn-sm btn-primary">In phiếu tiếp nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6">
+            <h6 class="fw-bold text-muted small">THÔNG TIN KHÁCH HÀNG:</h6>
+            <div class="fw-bold">{{ claim.customer.name }}</div>
+            <div>Điện thoại: {{ claim.customer.phone }}</div>
+            <div>Địa chỉ: {{ claim.customer.address|default:"--" }}</div>
+        </div>
+        <div class="col-6 text-end">
+            <h6 class="fw-bold text-muted small">THÔNG TIN THIẾT BỊ:</h6>
+            <div class="fw-bold">{{ claim.item.product.name }}</div>
+            <div>Serial/IMEI: <code>{{ claim.item.serial_number }}</code></div>
+            <div>Hạn BH gốc: {{ claim.item.warranty_end_date|date:"d/m/Y"|default:"--" }}</div>
+        </div>
+    </div>
+
+    <div class="card mb-4 border">
+        <div class="card-body">
+            <h6 class="fw-bold text-muted small">NỘI DUNG YÊU CẦU BẢO HÀNH:</h6>
+            <div class="text-danger fw-semibold mb-2">Triệu chứng lỗi: {{ claim.issue_description }}</div>
+            <div>Hình thức xử lý dự kiến: <strong>{{ claim.get_action_type_display }}</strong></div>
+            {% if claim.notes %}<div>Ghi chú: {{ claim.notes }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="alert alert-secondary small mb-4">
+        <strong>Lưu ý:</strong> Quý khách vui lòng mang theo phiếu này khi đến nhận lại thiết bị. Thời gian kiểm tra và xử lý thông thường từ 01 - 03 ngày làm việc.
+    </div>
+
+    <div class="row mt-5 pt-4 text-center">
+        <div class="col-6">
+            <div class="fw-bold">Khách hàng bàn giao</div>
+            <div class="small text-muted">(Ký, ghi rõ họ tên)</div>
+        </div>
+        <div class="col-6">
+            <div class="fw-bold">Kỹ thuật viên tiếp nhận</div>
+            <div class="small text-muted">(Ký, đóng dấu)</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Hồ sơ NCC: {{ supplier.name }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'catalog:supplier_list' %}">Nhà cung cấp</a></li>
+                <li class="breadcrumb-item active">{{ supplier.code }}</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0">{{ supplier.name }}</h4>
+    </div>
+    <div>
+        {% if is_ql or is_kho %}
+        <a href="{% url 'catalog:supplier_edit' supplier.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Sửa thông tin
+        </a>
+        {% endif %}
+        <a href="{% url 'catalog:supplier_list' %}" class="btn btn-secondary ms-2">Quay lại</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-building me-2 text-primary"></i>Hồ sơ nhà cung cấp</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted" style="width: 45%;">Mã NCC:</th><td><code>{{ supplier.code }}</code></td></tr>
+                    <tr><th class="text-muted">Tên đơn vị:</th><td><strong>{{ supplier.name }}</strong></td></tr>
+                    <tr><th class="text-muted">Số điện thoại:</th><td><a href="tel:{{ supplier.phone }}">{{ supplier.phone }}</a></td></tr>
+                    <tr><th class="text-muted">Email:</th><td>{{ supplier.email|default:"--" }}</td></tr>
+                    <tr><th class="text-muted">Địa chỉ:</th><td>{{ supplier.address|default:"--" }}</td></tr>
+                    <tr><th class="text-muted">Điều khoản nợ:</th><td><span class="badge bg-info text-dark">{{ supplier.payment_terms_days }} ngày</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Purchase Receipts -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>Phiếu nhập gần đây</h6>
+                <span class="badge bg-secondary">{{ receipts|length }} phiếu</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Ngày nhập</th>
+                            <th class="text-end">Tổng giá trị</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in receipts %}
+                        <tr>
+                            <td><a href="{% url 'purchasing:receipt_detail' r.pk %}" class="fw-bold text-decoration-none"><code>{{ r.code }}</code></a></td>
+                            <td>{{ r.receipt_date|date:"d/m/Y" }}</td>
+                            <td class="text-end fw-bold">{{ r.total_amount|floatformat:0|intcomma }} đ</td>
+                            <td>
+                                {% if r.status == 'COMPLETED' %}<span class="badge bg-success">Hoàn tất</span>
+                                {% elif r.status == 'DRAFT' %}<span class="badge bg-warning text-dark">Nháp</span>
+                                {% else %}<span class="badge bg-secondary">Hủy</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">Chưa có phiếu nhập nào từ NCC này.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payables -->
+        {% if is_kt or is_ql %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2 text-danger"></i>Công nợ phải trả NCC</h6>
+                <span class="badge bg-danger">{{ payables|length }} khoản</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã công nợ</th>
+                            <th>Hạn thanh toán</th>
+                            <th class="text-end">Tổng nợ</th>
+                            <th class="text-end">Còn nợ</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payables %}
+                        <tr>
+                            <td><a href="{% url 'finance:payable_detail' p.pk %}"><code>{{ p.code }}</code></a></td>
+                            <td>{{ p.due_date|date:"d/m/Y" }}</td>
+                            <td class="text-end">{{ p.total_amount|floatformat:0|intcomma }} đ</td>
+                            <td class="text-end fw-bold text-danger">{{ p.remaining_amount|floatformat:0|intcomma }} đ</td>
+                            <td>
+                                {% if p.status == 'PAID' %}<span class="badge bg-success">Đã trả</span>
+                                {% elif p.status == 'PARTIAL' %}<span class="badge bg-info text-dark">Trả một phần</span>
+                                {% else %}<span class="badge bg-warning text-dark">Chưa trả</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-3 text-muted">Không có khoản công nợ nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

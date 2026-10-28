@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-cart-plus me-2 text-primary"></i>{{ title }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" id="orderForm">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Khách hàng <span class="text-danger">*</span></label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}<div class="text-danger small">{{ form.customer.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phương thức thanh toán</label>
+                            {{ form.payment_method }}
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-muted mb-3 border-bottom pb-2">CHI TIẾT HÀNG HÓA</h6>
+                    {{ formset.management_form }}
+                    <div id="formsetContainer">
+                        {% for f in formset %}
+                        <div class="row g-2 mb-3 align-items-center formset-row p-3 bg-light rounded-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Sản phẩm</label>
+                                {{ f.product }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold">Số lượng</label>
+                                {{ f.quantity }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Đơn giá bán (VNĐ)</label>
+                                {{ f.unit_price }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Serial/IMEI (tùy chọn)</label>
+                                {{ f.selected_serials_text }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ghi chú đơn hàng</label>
+                        {{ form.notes }}
+                    </div>
+
+                    <div class="pt-3 border-top d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Lưu đơn hàng (Nháp)
+                        </button>
+                        <a href="{% url 'sales:order_list' %}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto populate unit_price when product is chosen
+    const productPrices = {
+        {% for p in products %}
+        "{{ p.id }}": {{ p.price|stringformat:"f" }},
+        {% endfor %}
+    };
+
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('product-select')) {
+            const pId = e.target.value;
+            const row = e.target.closest('.formset-row');
+            if (row && productPrices[pId]) {
+                const priceInput = row.querySelector('.price-input');
+                if (priceInput && !priceInput.value) {
+                    priceInput.value = productPrices[pId];
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+

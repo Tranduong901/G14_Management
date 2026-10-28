@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Kiểm kê & Điều chỉnh tồn kho - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'inventory:inventory_summary' %}">Kho hàng</a></li>
+                <li class="breadcrumb-item active">Kiểm kê & Điều chỉnh</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Danh sách kiểm kê & Điều chỉnh kho</h4>
+        <p class="text-muted small mb-0">Mọi chênh lệch kiểm kê phải ghi rõ lý do và được quản lý duyệt nếu vượt hạn mức (FR-07, BR07)</p>
+    </div>
+    {% if is_kho or is_ql %}
+    <a href="{% url 'inventory:adjustment_create' %}" class="btn btn-primary fw-semibold shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Lập phiếu kiểm kê mới
+    </a>
+    {% endif %}
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Thời gian lập</th>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Tồn HT</th>
+                    <th class="text-center">Tồn thực</th>
+                    <th class="text-center">Chênh lệch</th>
+                    <th class="text-end">Giá trị lệch ước tính</th>
+                    <th>Lý do điều chỉnh (BR07)</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adj in page_obj %}
+                <tr>
+                    <td><code>{{ adj.code }}</code></td>
+                    <td class="small text-muted">{{ adj.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <strong>{{ adj.product.name }}</strong>
+                        <div class="small text-muted">{{ adj.product.code }}</div>
+                    </td>
+                    <td class="text-center text-muted">{{ adj.system_quantity }}</td>
+                    <td class="text-center fw-bold">{{ adj.actual_quantity }}</td>
+                    <td class="text-center fw-bold">
+                        {% if adj.difference_quantity > 0 %}
+                        <span class="text-success">+{{ adj.difference_quantity }}</span>
+                        {% else %}
+                        <span class="text-danger">{{ adj.difference_quantity }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-muted">{{ adj.estimated_difference_value|floatformat:0|intcomma }} đ</td>
+                    <td class="small">{{ adj.reason|truncatechars:40 }}</td>
+                    <td>
+                        {% if adj.status == 'APPROVED' %}
+                        <span class="badge bg-success-subtle text-success">Đã duyệt & cập nhật</span>
+                        {% elif adj.status == 'PENDING_APPROVAL' %}
+                        <span class="badge bg-warning-subtle text-warning">Chờ Quản lý duyệt</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Từ chối</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if adj.status == 'PENDING_APPROVAL' and is_ql %}
+                        <form method="post" action="{% url 'inventory:adjustment_action' adj.pk 'approve' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success" title="Phê duyệt"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                        <form method="post" action="{% url 'inventory:adjustment_action' adj.pk 'reject' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối" onclick="return confirm('Từ chối điều chỉnh này?');"><i class="bi bi-x-lg"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">Không có phiếu kiểm kê nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

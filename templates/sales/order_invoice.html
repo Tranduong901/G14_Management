@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hóa đơn bán hàng - {{ order.code }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; padding: 40px; }
+        .invoice-box { max-width: 800px; margin: auto; }
+        .header-title { color: #0f172a; font-weight: 800; }
+        @media print {
+            body { padding: 0; }
+            .btn-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="invoice-box">
+    <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+        <div>
+            <h2 class="header-title mb-1">G14 MANAGEMENT</h2>
+            <div class="text-muted small">Doanh nghiệp kinh doanh & phân phối thiết bị công nghệ</div>
+            <div class="text-muted small">Địa chỉ: 123 Cầu Giấy, TP. Hà Nội | Hotline: 1900 1414</div>
+        </div>
+        <div class="text-end">
+            <h4 class="text-primary fw-bold mb-1">HÓA ĐƠN BÁN HÀNG</h4>
+            <div>Mã đơn: <strong>{{ order.code }}</strong></div>
+            <div class="text-muted small">Ngày lập: {{ order.order_date|date:"d/m/Y H:i" }}</div>
+            <div class="mt-2 btn-print">
+                <button onclick="window.print()" class="btn btn-sm btn-primary">In hóa đơn</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6">
+            <h6 class="fw-bold text-muted small">THÔNG TIN KHÁCH HÀNG:</h6>
+            <div class="fw-bold">{{ order.customer.name }}</div>
+            <div>Điện thoại: {{ order.customer.phone }}</div>
+            <div>Địa chỉ: {{ order.customer.address|default:"--" }}</div>
+        </div>
+        <div class="col-6 text-end">
+            <h6 class="fw-bold text-muted small">THÔNG TIN THANH TOÁN:</h6>
+            <div>Phương thức: <strong>{{ order.get_payment_method_display }}</strong></div>
+            <div>Trạng thái: <span class="badge bg-success">Đã thanh toán</span></div>
+            <div>Nhân viên phụ trách: {{ order.staff.get_full_name|default:order.staff.username }}</div>
+        </div>
+    </div>
+
+    <table class="table table-bordered mb-4">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 5%;">STT</th>
+                <th>Tên sản phẩm</th>
+                <th class="text-center" style="width: 12%;">Số lượng</th>
+                <th class="text-end" style="width: 22%;">Đơn giá</th>
+                <th class="text-end" style="width: 22%;">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in details %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>
+                    <strong>{{ d.product.name }}</strong>
+                    {% if d.selected_serials_text %}
+                    <br><small class="text-muted">Serial/IMEI: {{ d.selected_serials_text }}</small>
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ d.quantity }}</td>
+                <td class="text-end">{{ d.unit_price|floatformat:0 }} đ</td>
+                <td class="text-end fw-bold">{{ d.total_price|floatformat:0 }} đ</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-end fw-bold">Tổng thanh toán:</td>
+                <td class="text-end fw-bold text-primary fs-5">{{ order.total_amount|floatformat:0 }} đ</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="row mt-5 pt-4 text-center">
+        <div class="col-6">
+            <div class="fw-bold">Khách hàng</div>
+            <div class="small text-muted">(Ký, ghi rõ họ tên)</div>
+        </div>
+        <div class="col-6">
+            <div class="fw-bold">Đại diện G14 System</div>
+            <div class="small text-muted">(Ký, đóng dấu)</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

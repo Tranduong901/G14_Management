@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Dự báo nhu cầu - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-clock-history me-2 text-primary"></i>Dự báo nhu cầu bán hàng (DSS)</h4>
+        <p class="text-muted small mb-0">Phương pháp trung bình động 3 kỳ tháng gần nhất (SMA-3M) từ giao dịch hoàn tất (FR-17, BR21, TC28)</p>
+    </div>
+</div>
+
+<div class="alert alert-info py-2 small mb-4">
+    <i class="bi bi-info-circle me-1"></i> <strong>Quy tắc BR21:</strong> Dự báo chỉ được tính khi sản phẩm có đủ ít nhất 3 kỳ tháng phát sinh giao dịch bán hoàn tất. Nếu không đủ thì hệ thống hiển thị trạng thái "Chưa đủ dữ liệu". DSS chỉ đọc dữ liệu, không tự động đặt hàng hay thay đổi giao dịch (BR22).
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã SP</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Lịch sử bán theo kỳ (Tháng : SL)</th>
+                    <th class="text-center">Số kỳ dữ liệu</th>
+                    <th class="text-center">Dự báo kỳ tới (SMA 3 tháng)</th>
+                    <th>Trạng thái tính toán</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in forecast_data %}
+                <tr>
+                    <td><code>{{ f.product.code }}</code></td>
+                    <td class="fw-bold">{{ f.product.name }}</td>
+                    <td>
+                        {% if f.history %}
+                        <div class="d-flex gap-1 flex-wrap">
+                            {% for m, q in f.history %}
+                            <span class="badge bg-light text-dark border">{{ m }}: <strong>{{ q }}</strong></span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Chưa có giao dịch</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{{ f.history|length }} kỳ</td>
+                    <td class="text-center">
+                        {% if f.has_sufficient_data %}
+                        <span class="badge bg-primary fs-6 py-1 px-3">{{ f.forecast_val }} máy</span>
+                        {% else %}
+                        <span class="badge bg-light text-muted border">--</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if f.has_sufficient_data %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            <i class="bi bi-check-circle-fill"></i> Đủ 3 kỳ dữ liệu
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                            <i class="bi bi-exclamation-circle-fill"></i> Chưa đủ dữ liệu
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">Không có sản phẩm nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

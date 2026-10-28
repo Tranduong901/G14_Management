@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'catalog:product_list' %}">Sản phẩm</a></li>
+                <li class="breadcrumb-item active">{{ product.code }}</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-0">{{ product.name }}</h4>
+    </div>
+    <div>
+        {% if is_ql %}
+        <a href="{% url 'catalog:product_edit' product.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+        </a>
+        {% endif %}
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary ms-2">Quay lại</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Thông số sản phẩm</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted" style="width: 40%;">Mã sản phẩm:</th><td><code>{{ product.code }}</code></td></tr>
+                    <tr><th class="text-muted">Nhóm sản phẩm:</th><td><span class="badge bg-light text-dark border">{{ product.get_category_display }}</span></td></tr>
+                    <tr><th class="text-muted">Đơn vị tính:</th><td>{{ product.unit }}</td></tr>
+                    <tr><th class="text-muted">Giá bán niêm yết:</th><td class="fw-bold text-primary fs-5">{{ product.price|floatformat:0|intcomma }} đ</td></tr>
+                    <tr><th class="text-muted">Giá vốn tham chiếu:</th><td class="text-muted">{{ product.cost_price|floatformat:0|intcomma }} đ</td></tr>
+                    <tr><th class="text-muted">Tồn kho hiện tại:</th><td><span class="badge bg-success fs-6">{{ stock_qty }}</span></td></tr>
+                    <tr><th class="text-muted">Tồn tối thiểu:</th><td>{{ product.min_stock }}</td></tr>
+                    <tr><th class="text-muted">Quản lý IMEI:</th><td>{% if product.has_serial %}<span class="badge bg-info text-dark">Có</span>{% else %}<span class="badge bg-light text-dark">Không</span>{% endif %}</td></tr>
+                    <tr><th class="text-muted">Trạng thái:</th><td><span class="badge bg-success-subtle text-success">{{ product.get_status_display }}</span></td></tr>
+                </table>
+                {% if product.description %}
+                <div class="mt-3 pt-3 border-top">
+                    <h6 class="text-muted small fw-bold">MÔ TẢ</h6>
+                    <p class="small text-muted mb-0">{{ product.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        {% if product.has_serial %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-upc-scan me-2 text-primary"></i>Danh sách thiết bị Serial/IMEI</h6>
+                <span class="badge bg-primary">Tổng: {{ items|length }} máy</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Serial / IMEI</th>
+                            <th>Trạng thái</th>
+                            <th>Hạn bảo hành</th>
+                            <th>Phiếu nhập</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td><code>{{ item.serial_number }}</code></td>
+                            <td>
+                                {% if item.status == 'IN_STOCK' %}<span class="badge bg-success">Trong kho</span>
+                                {% elif item.status == 'SOLD' %}<span class="badge bg-primary">Đã xuất bán</span>
+                                {% elif item.status == 'DEFECTIVE' %}<span class="badge bg-danger">Lỗi/BH</span>
+                                {% else %}<span class="badge bg-secondary">{{ item.get_status_display }}</span>{% endif %}
+                            </td>
+                            <td class="small">{{ item.warranty_end_date|default:"Chưa kích hoạt" }}</td>
+                            <td class="small text-muted">{{ item.purchase_receipt.code|default:"--" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">Chưa có thiết bị nào gắn với sản phẩm này.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

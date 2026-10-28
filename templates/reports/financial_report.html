@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Báo cáo tài chính cơ bản - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2 text-primary"></i>Báo cáo tài chính cơ bản & Dòng tiền (FR-09, TC20, TC21, TC22)</h4>
+        <p class="text-muted small mb-0">Theo dõi dòng tiền vào/ra, số dư tồn quỹ và nghĩa vụ công nợ nhà cung cấp</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-white border-start border-4 border-success">
+            <div class="text-muted small fw-semibold">TỔNG THU (RECEIPTS)</div>
+            <div class="fs-4 fw-bold text-success">+{{ summary.total_receipts|floatformat:0|intcomma }} đ</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-white border-start border-4 border-danger">
+            <div class="text-muted small fw-semibold">TỔNG CHI (PAYMENTS)</div>
+            <div class="fs-4 fw-bold text-danger">-{{ summary.total_payments|floatformat:0|intcomma }} đ</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-white border-start border-4 border-primary">
+            <div class="text-muted small fw-semibold">SỐ DƯ QUỸ HIỆN TẠI</div>
+            <div class="fs-4 fw-bold text-primary">{{ summary.total_balance|floatformat:0|intcomma }} đ</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-white border-start border-4 border-warning">
+            <div class="text-muted small fw-semibold">TỔNG CÔNG NỢ CÒN PHẢI TRẢ</div>
+            <div class="fs-4 fw-bold text-danger">{{ summary.total_payable|floatformat:0|intcomma }} đ</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Cash Ledger -->
+    <div class="col-lg-7 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-cash-stack me-2 text-primary"></i>Dòng tiền thu chi gần đây</h6>
+                <a href="{% url 'finance:cash_ledger_list' %}" class="small text-decoration-none">Xem sổ quỹ &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã</th>
+                            <th>Ngày</th>
+                            <th>Loại</th>
+                            <th class="text-end">Số tiền</th>
+                            <th>Lý do</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in recent_ledgers %}
+                        <tr>
+                            <td><code>{{ l.code }}</code></td>
+                            <td class="small text-muted">{{ l.entry_date|date:"d/m H:i" }}</td>
+                            <td>
+                                {% if l.transaction_type == 'RECEIPT' %}
+                                <span class="badge bg-success-subtle text-success">Thu</span>
+                                {% else %}
+                                <span class="badge bg-danger-subtle text-danger">Chi</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold">
+                                {% if l.transaction_type == 'RECEIPT' %}
+                                <span class="text-success">+{{ l.amount|floatformat:0|intcomma }} đ</span>
+                                {% else %}
+                                <span class="text-danger">-{{ l.amount|floatformat:0|intcomma }} đ</span>
+                                {% endif %}
+                            </td>
+                            <td class="small">{{ l.reason|truncatechars:35 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-3 text-muted">Chưa có bút toán nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue & Upcoming Payables -->
+    <div class="col-lg-5 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2 text-danger"></i>Khoản nợ NCC sắp đến hạn / quá hạn</h6>
+                <a href="{% url 'finance:payable_list' %}" class="small text-decoration-none">Xem danh mục &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>NCC</th>
+                            <th>Hạn TT</th>
+                            <th class="text-end">Còn nợ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in overdue_payables %}
+                        <tr>
+                            <td>
+                                <strong>{{ p.supplier.name }}</strong>
+                                <div class="small text-muted"><code>{{ p.code }}</code></div>
+                            </td>
+                            <td>
+                                {{ p.due_date|date:"d/m/Y" }}
+                                {% if p.is_overdue %}<span class="badge bg-danger">Quá hạn</span>{% endif %}
+                            </td>
+                            <td class="text-end fw-bold text-danger">{{ p.remaining_amount|floatformat:0|intcomma }} đ</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted">Không có khoản nợ nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

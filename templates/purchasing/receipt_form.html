@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>{{ title }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nhà cung cấp <span class="text-danger">*</span></label>
+                            {{ form.supplier }}
+                            {% if form.supplier.errors %}<div class="text-danger small">{{ form.supplier.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày nhập hàng</label>
+                            {{ form.receipt_date }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lý do nhập khẩn / ngoài kế hoạch (nếu không tạo từ Đề nghị nhập đã duyệt)</label>
+                        {{ form.emergency_reason }}
+                    </div>
+
+                    <h6 class="fw-bold text-muted mb-3 border-bottom pb-2">CHI TIẾT HÀNG HÓA NHẬP KHO</h6>
+                    {{ formset.management_form }}
+                    <div id="formsetContainer">
+                        {% for f in formset %}
+                        <div class="row g-2 mb-3 align-items-center formset-row p-3 bg-light rounded-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Sản phẩm</label>
+                                {{ f.product }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold">Số lượng</label>
+                                {{ f.quantity }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold">Giá nhập (VNĐ)</label>
+                                {{ f.unit_price }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Danh sách Serial/IMEI</label>
+                                {{ f.serials_text }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ghi chú phiếu nhập</label>
+                        {{ form.notes }}
+                    </div>
+
+                    <div class="pt-3 border-top d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Lưu phiếu nhập (Nháp)
+                        </button>
+                        <a href="{% url 'purchasing:receipt_list' %}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

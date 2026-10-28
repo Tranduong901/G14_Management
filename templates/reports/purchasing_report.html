@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Báo cáo nhập hàng - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-journal-arrow-down me-2 text-primary"></i>Báo cáo nhập hàng & Chi phí mua hàng (FR-09, TC08, TC09)</h4>
+        <p class="text-muted small mb-0">Thống kê giá trị mua hàng theo nhà cung cấp và tiến độ thanh toán</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4 mb-4 bg-info text-dark">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <div class="small fw-semibold text-uppercase">TỔNG GIÁ TRỊ NHẬP HÀNG HOÀN TẤT</div>
+            <div class="fs-2 fw-bold">{{ total_purchase_val|floatformat:0|intcomma }} VNĐ</div>
+        </div>
+        <i class="bi bi-box-arrow-in-down fs-1 opacity-50"></i>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Supplier Breakdown -->
+    <div class="col-lg-5 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-building me-2 text-primary"></i>Tỷ trọng nhập theo nhà cung cấp</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nhà cung cấp</th>
+                            <th class="text-center">Số phiếu</th>
+                            <th class="text-end">Tổng giá trị</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in supplier_summary %}
+                        <tr>
+                            <td>
+                                <strong>{{ s.supplier__name }}</strong>
+                                <div class="small text-muted">{{ s.supplier__code }}</div>
+                            </td>
+                            <td class="text-center">{{ s.total_receipts }}</td>
+                            <td class="text-end fw-bold text-primary">{{ s.total_val|floatformat:0|intcomma }} đ</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted">Chưa có số liệu nhập hàng.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Receipts -->
+    <div class="col-lg-7 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Danh sách phiếu nhập hoàn tất gần nhất</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Ngày nhập</th>
+                            <th>Nhà cung cấp</th>
+                            <th class="text-end">Tổng giá trị</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in receipts %}
+                        <tr>
+                            <td><a href="{% url 'purchasing:receipt_detail' r.pk %}"><code>{{ r.code }}</code></a></td>
+                            <td>{{ r.receipt_date|date:"d/m/Y" }}</td>
+                            <td>{{ r.supplier.name }}</td>
+                            <td class="text-end fw-bold">{{ r.total_amount|floatformat:0|intcomma }} đ</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">Không có phiếu nhập nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

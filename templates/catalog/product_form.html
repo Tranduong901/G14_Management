@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>{{ title }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Mã sản phẩm <span class="text-danger">*</span></label>
+                            {{ form.code }}
+                            {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Tên sản phẩm <span class="text-danger">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Nhóm sản phẩm</label>
+                            {{ form.category }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Đơn vị tính</label>
+                            {{ form.unit }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Giá bán niêm yết (VNĐ) <span class="text-danger">*</span></label>
+                            {{ form.price }}
+                            {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Giá vốn tham chiếu (VNĐ)</label>
+                            {{ form.cost_price }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tồn kho tối thiểu</label>
+                            {{ form.min_stock }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch mt-2">
+                            {{ form.has_serial }}
+                            <label class="form-check-label fw-semibold" for="{{ form.has_serial.id_for_label }}">
+                                Quản lý định danh theo từng mã Serial/IMEI riêng biệt (áp dụng cho điện thoại, tablet, laptop...)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Mô tả sản phẩm</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="pt-3 border-top">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-check-lg me-1"></i> Lưu sản phẩm
+                        </button>
+                        <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary ms-2">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

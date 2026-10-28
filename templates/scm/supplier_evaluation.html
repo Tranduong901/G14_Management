@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Đánh giá nhà cung cấp - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-award me-2 text-primary"></i>Hồ sơ & Đánh giá nhà cung cấp (SCM)</h4>
+        <p class="text-muted small mb-0">Tổng hợp dữ liệu giao dịch thực tế: Thời gian giao hàng, tỷ lệ đúng hạn và tỷ lệ lỗi bảo hành (FR-14, QT13, TC15, TC24, TC25)</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã NCC</th>
+                    <th>Tên nhà cung cấp</th>
+                    <th class="text-center">Số phiếu nhập</th>
+                    <th class="text-end">Tổng giá trị đã mua</th>
+                    <th class="text-center">Thời gian giao TB</th>
+                    <th class="text-center">Giao đúng hạn (TC25)</th>
+                    <th class="text-center">Tỷ lệ bảo hành (TC15)</th>
+                    <th class="text-end">Công nợ còn nợ</th>
+                    <th class="text-end">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sc in scorecards %}
+                <tr>
+                    <td><code>{{ sc.supplier.code }}</code></td>
+                    <td>
+                        <strong>{{ sc.supplier.name }}</strong>
+                        <div class="small text-muted">{{ sc.supplier.phone }}</div>
+                    </td>
+                    <td class="text-center">{{ sc.receipt_count }}</td>
+                    <td class="text-end fw-bold text-primary">{{ sc.total_spent|floatformat:0|intcomma }} đ</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">{{ sc.avg_lead_days }} ngày</span>
+                    </td>
+                    <td class="text-center">
+                        {% if sc.on_time_rate >= 90 %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ sc.on_time_rate }}%</span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">{{ sc.on_time_rate }}%</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if sc.warranty_rate <= 2.0 %}
+                        <span class="badge bg-success-subtle text-success">{{ sc.warranty_rate }}% ({{ sc.warranty_returns }})</span>
+                        {% else %}
+                        <span class="badge bg-danger-subtle text-danger">{{ sc.warranty_rate }}% ({{ sc.warranty_returns }})</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold text-danger">{{ sc.total_debt|floatformat:0|intcomma }} đ</td>
+                    <td class="text-end">
+                        <a href="{% url 'catalog:supplier_detail' sc.supplier.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Chưa có dữ liệu giao dịch nhà cung cấp.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

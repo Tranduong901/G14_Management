@@ -81,58 +81,37 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# Database configuration
-# Default primary target is MySQL as required
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.mysql')
-DB_NAME = os.getenv('DB_NAME', 'g14_db')
-DB_USER = os.getenv('DB_USER', 'root')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'root')
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-DB_PORT = os.getenv('DB_PORT', '3306')
-DB_FALLBACK_SQLITE = os.getenv('DB_FALLBACK_SQLITE', 'True') == 'True'
+# PostgreSQL configuration. Render provides DATABASE_URL in the service environment.
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise RuntimeError('DATABASE_URL must be set to the Render PostgreSQL database.')
 
-def test_mysql_connection(host, port):
-    import socket
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1.0)
-        result = sock.connect_ex((host, int(port)))
-        sock.close()
-        return result == 0
-    except Exception:
-        return False
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-# Setup DATABASES with MySQL configuration
-if DB_ENGINE == 'django.db.backends.mysql' and DB_FALLBACK_SQLITE and not test_mysql_connection(DB_HOST, DB_PORT):
-    # MySQL server is not currently reachable in this local environment.
-    # Fallback seamlessly to SQLite so development, seed commands, and testing succeed without interruption.
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'g14_dev.sqlite3',
-        }
+database_url_parts = urlsplit(DATABASE_URL)
+database_query = dict(parse_qsl(database_url_parts.query))
+database_query.setdefault('sslmode', 'require')
+DATABASE_URL = urlunsplit(
+    (
+        database_url_parts.scheme,
+        database_url_parts.netloc,
+        database_url_parts.path,
+        urlencode(database_query),
+        database_url_parts.fragment,
+    )
+)
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': database_url_parts.path.lstrip('/'),
+        'USER': database_url_parts.username,
+        'PASSWORD': database_url_parts.password,
+        'HOST': database_url_parts.hostname,
+        'PORT': database_url_parts.port or 5432,
+        'OPTIONS': {'sslmode': database_query['sslmode']},
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': DB_ENGINE,
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES', default_storage_engine=INNODB;",
-            } if 'mysql' in DB_ENGINE else {},
-            'TEST': {
-                'NAME': 'g14_test_db',
-                'CHARSET': 'utf8mb4',
-                'COLLATION': 'utf8mb4_unicode_ci',
-            } if 'mysql' in DB_ENGINE else {},
-        }
-    }
-
+}
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -177,4 +156,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Business Constants
 FORECAST_MOVING_AVG_MONTHS = int(os.getenv('FORECAST_MOVING_AVG_MONTHS', 3))
 AUDIT_ADJUSTMENT_LIMIT = int(os.getenv('AUDIT_ADJUSTMENT_LIMIT', 5000000))  # 5,000,000 VND
-

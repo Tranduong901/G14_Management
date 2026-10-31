@@ -5,7 +5,7 @@
 
 ## 1. TỔNG QUAN KIẾN TRÚC HỆ THỐNG
 
-Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (Three-Tier Architecture)** kết hợp với **Mô hình Hướng Dịch Vụ (Service-Oriented / Service Layer Pattern)** trên nền tảng **Python Django + MySQL**:
+Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (Three-Tier Architecture)** kết hợp với **Mô hình Hướng Dịch Vụ (Service-Oriented / Service Layer Pattern)** trên nền tảng **Python Django + PostgreSQL trên Render**:
 
 ```text
 +-----------------------------------------------------------------------------------+
@@ -32,7 +32,7 @@ Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (T
                                          ▼
 +-----------------------------------------------------------------------------------+
 |                            LỚP DỮ LIỆU DÙNG CHUNG (DATA TIER)                     |
-|   - Cơ sở dữ liệu quan hệ dùng chung: MySQL (InnoDB, utf8mb4)                     |
+|   - Cơ sở dữ liệu quan hệ dùng chung: PostgreSQL trên Render                      |
 |   - Khóa chính, Khóa ngoại, Chỉ mục tối ưu, Khóa duy nhất (Unique Constraints)   |
 |   - Phục vụ báo cáo BI trực tiếp qua các SQL Views chuẩn bị sẵn                  |
 +-----------------------------------------------------------------------------------+
@@ -135,4 +135,3 @@ Hệ thống loại bỏ hoàn toàn các trang CRUD rời rạc bằng cách x�
 - Khóa ngoại có ràng buộc `on_delete=models.PROTECT` đối với các bảng danh mục quan trọng (sản phẩm, khách hàng, nhà cung cấp) để ngăn chặn việc xóa dữ liệu đang được tham chiếu trong đơn hàng hoặc phiếu nhập.
 - Khóa duy nhất (Unique Constraint) trên: Mã sản phẩm, Mã khách hàng, Mã nhà cung cấp, Mã Serial/IMEI, Mã đơn bán, Mã phiếu nhập, Mã công nợ, Mã đề nghị nhập hàng.
 - Toàn bộ số tiền được lưu bằng kiểu dữ liệu `DecimalField(max_digits=15, decimal_places=2)` để triệt tiêu sai số làm tròn số thực.
-

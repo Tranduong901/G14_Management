@@ -8,7 +8,7 @@ Hệ thống thông tin quản trị doanh nghiệp toàn diện phục vụ chu
 ## 1. CÔNG NGHỆ NỀN TẢNG
 
 - **Backend:** Python 3.12 + Django 6.1.2.
-- **Database:** MySQL 8.x / MariaDB (kết nối qua PyMySQL với cấu hình utf8mb4, InnoDB, strict mode).
+- **Database:** PostgreSQL trên Render (kết nối qua `DATABASE_URL`, SSL bắt buộc).
 - **ORM:** Django ORM với Service Layer Pattern & Transaction Atomic (ACID).
 - **Frontend:** Django Templates, HTML5, CSS3, JavaScript, Bootstrap 5.3, Bootstrap Icons.
 - **Biểu đồ trực quan:** Chart.js (Line chart, Doughnut chart, Bar chart).
@@ -82,23 +82,13 @@ cd D:\QTHTTT\BTL\g14_system
 pip install -r requirements.txt
 ```
 
-### Bước 3: Cấu hình Cơ sở dữ liệu MySQL
-1. Khởi động MySQL Server (ví dụ qua XAMPP, WampServer hoặc Windows MySQL Service).
-2. Tạo database:
-   ```sql
-   CREATE DATABASE g14_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. Cập nhật thông tin kết nối trong file `.env`:
+### Bước 3: Cấu hình PostgreSQL trên Render
+1. Tạo PostgreSQL database trên Render và lấy Internal/External Database URL.
+2. Cập nhật biến môi trường `DATABASE_URL` trong file `.env` khi chạy local hoặc trong Environment của Render:
    ```ini
-   DB_ENGINE=django.db.backends.mysql
-   DB_NAME=g14_db
-   DB_USER=root
-   DB_PASSWORD=root
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_FALLBACK_SQLITE=True
+   DATABASE_URL=postgresql://user:password@host/database
    ```
-   *(Ghi chú: Nếu môi trường máy chưa bật MySQL server, hệ thống sẽ tự động fallback sang SQLite dev database để đảm bảo server và test suite chạy mượt mà không bị crash).*
+   Không commit `.env` hoặc chia sẻ `DATABASE_URL` vì URL có chứa thông tin xác thực.
 
 ### Bước 4: Thực thi Migrations tạo cấu trúc bảng
 ```powershell
@@ -130,6 +120,20 @@ python manage.py test tests
 python manage.py runserver 127.0.0.1:8000
 ```
 Truy cập hệ thống tại: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+
+### Triển khai trên Render Web Service
+Thiết lập Build Command:
+```bash
+pip install -r requirements.txt
+```
+
+Thiết lập Start Command:
+```bash
+python manage.py migrate --noinput && gunicorn config.wsgi:application
+```
+
+Trong Environment của Render, bắt buộc cấu hình `DATABASE_URL`, `SECRET_KEY`,
+`DEBUG=False` và `ALLOWED_HOSTS` theo hostname của Web Service.
 
 ---
 

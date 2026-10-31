@@ -3,7 +3,7 @@
 
 **Học phần:** Quản trị Hệ thống Thông tin  
 **Nhóm thực hiện:** Nhóm 14  
-**Công nghệ:** Django 6.1.2 + MySQL / PyMySQL + Django Test Framework  
+**Công nghệ:** Django 6.1.2 + PostgreSQL / psycopg + Django Test Framework
 **Thời gian thực thi:** 28/10/2026  
 **Kết quả tổng quan:** **14/14 TEST CASES ĐẠT (100% PASSED)**
 
@@ -114,4 +114,3 @@ Tất cả 14 ca kiểm thử bắt buộc theo yêu cầu đặc tả nghiệp 
 1. **Tính đúng đắn của nghiệp vụ:** Hệ thống thực hiện chính xác các luồng liên phân hệ (Bán hàng, Nhập hàng, Kho, Serial/IMEI, Bảo hành, Sổ quỹ, Công nợ, SCM và DSS).
 2. **Tính toàn vẹn dữ liệu:** Toàn bộ các thao tác đa bảng được bảo vệ bằng transaction, không để lại dữ liệu rác hay trạng thái dở dang khi xảy ra lỗi.
 3. **Tuân thủ quy định quản trị:** Đáp ứng 100% các quy tắc từ BR01 đến BR22 theo Báo cáo nghiệp vụ G14.
-

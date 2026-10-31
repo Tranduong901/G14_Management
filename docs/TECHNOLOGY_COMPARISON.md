@@ -80,12 +80,12 @@ G14 đã triển khai thành công bài toán **Quy hoạch tuyến tính số n
 | Tiêu chí | Microsoft Power BI | Metabase |
 | :--- | :--- | :--- |
 | **Loại hình** | Nền tảng phân tích doanh nghiệp thương mại (Desktop + Cloud Service). | Nền tảng BI mã nguồn mở (Self-hosted trên Docker / Web JAR). |
-| **Kết nối cơ sở dữ liệu** | Trực tiếp qua MySQL ODBC/Connector, import data hoặc DirectQuery. | Kết nối trực tiếp native qua JDBC Driver tới MySQL. |
+| **Kết nối cơ sở dữ liệu** | Trực tiếp qua PostgreSQL connector, import data hoặc DirectQuery. | Kết nối trực tiếp native qua JDBC Driver tới PostgreSQL. |
 | **Giao diện & Trực quan** | Rất mạnh, nhiều biểu đồ tùy biến, DAX engine tính toán phức tạp. | Giao diện Web trực quan, thân thiện cho người dùng phi kỹ thuật (hỏi đáp dữ liệu). |
 | **Tự động hóa & Nhúng** | Yêu cầu license Power BI Pro/Premium để nhúng (Power BI Embedded). | Rất dễ nhúng trực tiếp qua Iframe có ký token JWT vào giao diện Web Django. |
 | **Chi phí** | Bản Desktop miễn phí, chia sẻ báo cáo yêu cầu 10$/user/tháng. | Miễn phí hoàn toàn với bản Community self-hosted. |
 
-### 3.2. Chuẩn bị truy vấn SQL / View phục vụ kết nối BI trực tiếp từ MySQL G14
+### 3.2. Chuẩn bị truy vấn SQL / View phục vụ kết nối BI trực tiếp từ PostgreSQL G14
 
 Hệ thống G14 chuẩn bị sẵn các câu lệnh SQL View tối ưu hóa phục vụ kết nối BI (Power BI & Metabase) để truy vấn không làm ảnh hưởng tới hiệu năng bảng giao dịch:
 
@@ -94,8 +94,8 @@ Hệ thống G14 chuẩn bị sẵn các câu lệnh SQL View tối ưu hóa ph�
 CREATE OR REPLACE VIEW v_bi_sales_performance AS
 SELECT 
     DATE(o.completed_at) AS sale_date,
-    YEAR(o.completed_at) AS sale_year,
-    MONTH(o.completed_at) AS sale_month,
+    EXTRACT(YEAR FROM o.completed_at) AS sale_year,
+    EXTRACT(MONTH FROM o.completed_at) AS sale_month,
     p.code AS product_code,
     p.name AS product_name,
     p.category AS category_code,
@@ -161,7 +161,7 @@ SELECT
     COUNT(pr.id) AS completed_receipt_count,
     COALESCE(SUM(pr.total_amount), 0) AS total_purchased_val,
     COALESCE(SUM(pay.remaining_amount), 0) AS total_debt_remaining,
-    COALESCE(SUM(CASE WHEN pay.remaining_amount > 0 AND pay.due_date < CURRENT_DATE() THEN pay.remaining_amount ELSE 0 END), 0) AS overdue_debt_amount
+    COALESCE(SUM(CASE WHEN pay.remaining_amount > 0 AND pay.due_date < CURRENT_DATE THEN pay.remaining_amount ELSE 0 END), 0) AS overdue_debt_amount
 FROM catalog_supplier s
 LEFT JOIN purchasing_purchasereceipt pr ON s.id = pr.supplier_id AND pr.status = 'COMPLETED'
 LEFT JOIN finance_payable pay ON pr.id = pay.purchase_receipt_id
@@ -172,7 +172,7 @@ GROUP BY s.id, s.code, s.name, s.payment_terms_days;
 - **Đã tích hợp thực tế trong hệ thống G14:**
   - **Google OR-Tools:** Đã tích hợp trực tiếp mã nguồn vào backend `dss/services.py` và có giao diện web tương tác `dss/optimizer/` chạy giải toán trực tiếp.
   - **Chart.js:** Đã tích hợp trực tiếp trên Dashboard điều hành và các trang báo cáo, hiển thị biểu đồ xu hướng doanh thu, cơ cấu nhóm hàng và tỷ lệ thực tế.
-  - **SQL BI Views:** Đã chuẩn hóa và xây dựng cấu trúc SQL sẵn sàng cho cổng kết nối MySQL (Port 3306).
+  - **SQL BI Views:** Đã chuẩn hóa và xây dựng cấu trúc SQL sẵn sàng cho cổng kết nối PostgreSQL Render (Port 5432).
 - **Mức độ nghiên cứu & chuẩn bị:**
   - **ERPNext:** Nghiên cứu kiến trúc, so sánh chức năng và thiết lập mô hình tích hợp dữ liệu qua REST API.
   - **frePPLe:** Nghiên cứu đối sánh với OR-Tools để chọn giải pháp tối ưu cho chuỗi phân phối.

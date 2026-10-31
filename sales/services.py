@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from sales.models import SalesOrder, SalesOrderDetail, OrderStatus, PaymentStatus, PaymentMethod
+from catalog.models import Product
 from inventory.models import InventoryTransaction, TransactionType
 from devices.models import ProductItem, ItemStatus
 from finance.models import CashLedger, LedgerType, PaymentMethod as FinancePaymentMethod
@@ -31,6 +32,9 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
     - BR17: Records CashLedger Thu entry immediately upon payment.
     - Idempotent: cannot be completed multiple times.
     """
+    SalesOrder.objects.select_for_update().get(pk=order.pk)
+    order.refresh_from_db()
+
     if order.status == OrderStatus.COMPLETED:
         raise ValidationError(f"Đơn hàng {order.code} đã hoàn tất trước đó. Không cho phép ghi nhận trùng doanh thu (Mã BR04).")
     if order.status == OrderStatus.CANCELLED:
@@ -45,7 +49,7 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
 
     # Process each order line
     for detail in details:
-        product = detail.product
+        product = Product.objects.select_for_update().get(pk=detail.product_id)
         qty = detail.quantity
         line_total = detail.unit_price * Decimal(str(qty))
         total_amount += line_total
@@ -63,7 +67,12 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
             serials = parse_serials(detail.selected_serials_text)
             if len(serials) != qty:
                 # If user didn't enter serials manually, auto-assign from available in-stock devices
-                avail_items = list(ProductItem.objects.filter(product=product, status=ItemStatus.IN_STOCK)[:qty])
+                avail_items = list(
+                    ProductItem.objects.select_for_update().filter(
+                        product=product,
+                        status=ItemStatus.IN_STOCK,
+                    )[:qty]
+                )
                 if len(avail_items) < qty:
                     raise ValidationError(f"Không đủ thiết bị có Serial/IMEI khả dụng trong kho cho sản phẩm '{product.name}'.")
                 serials = [item.serial_number for item in avail_items]
@@ -71,7 +80,12 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
                 detail.save(update_fields=['selected_serials_text'])
 
             # Verify all serials are currently IN_STOCK
-            items = list(ProductItem.objects.filter(product=product, serial_number__in=serials))
+            items = list(
+                ProductItem.objects.select_for_update().filter(
+                    product=product,
+                    serial_number__in=serials,
+                )
+            )
             if len(items) != len(serials):
                 found_serials = {it.serial_number for it in items}
                 missing = set(serials) - found_serials
@@ -154,4 +168,3 @@ def cancel_sales_order(order, user, reason=''):
         changes={'code': order.code, 'status': 'CANCELLED', 'reason': reason}
     )
     return order
-

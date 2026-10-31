@@ -48,6 +48,16 @@ class Product(BaseModel):
         verbose_name = "Sản phẩm"
         verbose_name_plural = "Danh mục sản phẩm"
         ordering = ['code']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(price__gte=0),
+                name='product_price_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(cost_price__gte=0),
+                name='product_cost_price_non_negative',
+            ),
+        ]
 
     def __str__(self):
         return f"[{self.code}] {self.name}"
@@ -126,4 +136,3 @@ class Supplier(BaseModel):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
-

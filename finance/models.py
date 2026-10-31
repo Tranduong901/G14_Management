@@ -72,6 +72,12 @@ class CashLedger(BaseModel):
         verbose_name = "Bút toán sổ quỹ"
         verbose_name_plural = "Sổ quỹ thu - chi (ERP)"
         ordering = ['-entry_date', '-created_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name='cash_ledger_amount_non_negative',
+            ),
+        ]
 
     def __str__(self):
         return f"[{self.get_transaction_type_display()}] {self.code} - {self.amount:,.0f} đ ({self.get_payment_method_display()})"
@@ -123,6 +129,24 @@ class Payable(BaseModel):
         verbose_name = "Công nợ phải trả NCC"
         verbose_name_plural = "Danh mục công nợ phải trả NCC"
         ordering = ['due_date', '-created_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(total_amount__gte=0),
+                name='payable_total_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(paid_amount__gte=0),
+                name='payable_paid_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(remaining_amount__gte=0),
+                name='payable_remaining_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(paid_amount__lte=models.F('total_amount')),
+                name='payable_paid_not_over_total',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.supplier.name} - Còn nợ: {self.remaining_amount:,.0f} đ"
@@ -160,4 +184,9 @@ class PayablePayment(BaseModel):
         verbose_name = "Lịch sử thanh toán công nợ"
         verbose_name_plural = "Lịch sử thanh toán công nợ"
         ordering = ['-payment_date']
-
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name='payable_payment_amount_positive',
+            ),
+        ]

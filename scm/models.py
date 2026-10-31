@@ -132,6 +132,20 @@ class PurchaseRequestDetail(BaseModel):
     class Meta:
         verbose_name = "Chi tiết đề nghị nhập hàng"
         verbose_name_plural = "Chi tiết đề nghị nhập hàng"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(requested_quantity__gt=0),
+                name='purchase_request_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(estimated_price__gte=0),
+                name='purchase_request_price_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(estimated_total__gte=0),
+                name='purchase_request_total_non_negative',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         self.estimated_total = Decimal(str(self.requested_quantity)) * self.estimated_price
@@ -139,4 +153,3 @@ class PurchaseRequestDetail(BaseModel):
 
     def __str__(self):
         return f"{self.product.name} x {self.requested_quantity}"
-

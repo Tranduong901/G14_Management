@@ -42,7 +42,20 @@ class ForecastResult(BaseModel):
         verbose_name = "Kết quả dự báo nhu cầu"
         verbose_name_plural = "Dữ liệu dự báo nhu cầu (DSS)"
         ordering = ['-forecast_period', 'product__code']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'forecast_period'],
+                name='forecast_result_product_period_unique',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(forecasted_quantity__gte=0),
+                name='forecast_quantity_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(actual_quantity__gte=0) | models.Q(actual_quantity__isnull=True),
+                name='forecast_actual_quantity_non_negative',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.product.name} ({self.forecast_period}): Dự báo {self.forecasted_quantity}"
-

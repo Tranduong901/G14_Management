@@ -33,7 +33,8 @@ Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (T
 +-----------------------------------------------------------------------------------+
 |                            LỚP DỮ LIỆU DÙNG CHUNG (DATA TIER)                     |
 |   - Cơ sở dữ liệu quan hệ dùng chung: PostgreSQL trên Render                      |
-|   - Khóa chính, Khóa ngoại, Chỉ mục tối ưu, Khóa duy nhất (Unique Constraints)   |
+|   - Khóa chính, Khóa ngoại, CHECK và Khóa duy nhất (Unique Constraints)           |
+|   - Khóa dòng bằng select_for_update trong các luồng cập nhật tồn/công nợ         |
 |   - Phục vụ báo cáo BI trực tiếp qua các SQL Views chuẩn bị sẵn                  |
 +-----------------------------------------------------------------------------------+
 ```
@@ -135,3 +136,6 @@ Hệ thống loại bỏ hoàn toàn các trang CRUD rời rạc bằng cách x�
 - Khóa ngoại có ràng buộc `on_delete=models.PROTECT` đối với các bảng danh mục quan trọng (sản phẩm, khách hàng, nhà cung cấp) để ngăn chặn việc xóa dữ liệu đang được tham chiếu trong đơn hàng hoặc phiếu nhập.
 - Khóa duy nhất (Unique Constraint) trên: Mã sản phẩm, Mã khách hàng, Mã nhà cung cấp, Mã Serial/IMEI, Mã đơn bán, Mã phiếu nhập, Mã công nợ, Mã đề nghị nhập hàng.
 - Toàn bộ số tiền được lưu bằng kiểu dữ liệu `DecimalField(max_digits=15, decimal_places=2)` để triệt tiêu sai số làm tròn số thực.
+- CHECK constraint tại CSDL kiểm soát số lượng dương, số tiền không âm và `paid_amount <= total_amount` của công nợ.
+- `ForecastResult` có unique constraint kết hợp trên `(product, forecast_period)`.
+- `complete_sales_order`, `complete_purchase_receipt` và `pay_payable` khóa bản ghi liên quan bằng `select_for_update()` trong `transaction.atomic()` để tránh cập nhật đồng thời gây trừ tồn hoặc chi trả vượt số dư.

@@ -22,6 +22,10 @@ def pay_payable(payable, amount, payment_method=PaymentMethod.BANK_TRANSFER, not
     - Creates Chi entry in CashLedger.
     - Updates payable balance and status (PARTIAL or PAID).
     """
+    payable = Payable.objects.select_for_update().select_related(
+        'supplier',
+        'purchase_receipt',
+    ).get(pk=payable.pk)
     amount = Decimal(str(amount))
     if amount <= Decimal('0.00'):
         raise ValidationError("Số tiền thanh toán phải lớn hơn 0.")
@@ -205,4 +209,3 @@ def get_financial_summary():
         'overdue_amount': overdue_amount,
         'overdue_count': overdue_count,
     }
-

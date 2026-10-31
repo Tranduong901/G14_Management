@@ -83,6 +83,20 @@ class PurchaseDetail(BaseModel):
     class Meta:
         verbose_name = "Chi tiết phiếu nhập"
         verbose_name_plural = "Chi tiết phiếu nhập"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='purchase_detail_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(unit_price__gte=0),
+                name='purchase_detail_unit_price_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(total_price__gte=0),
+                name='purchase_detail_total_price_non_negative',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         self.total_price = Decimal(str(self.quantity)) * self.unit_price
@@ -90,4 +104,3 @@ class PurchaseDetail(BaseModel):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity} = {self.total_price:,.0f}"
-

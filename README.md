@@ -129,7 +129,7 @@ pip install -r requirements.txt
 
 Thiết lập Start Command:
 ```bash
-python manage.py migrate --noinput && gunicorn config.wsgi:application
+DJANGO_SETTINGS_MODULE=config.settings.prod python manage.py migrate --noinput && DJANGO_SETTINGS_MODULE=config.settings.prod python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
 ```
 
 Trong Environment của Render, bắt buộc cấu hình `DATABASE_URL`, `SECRET_KEY`,

@@ -34,6 +34,12 @@ class InventoryTransaction(BaseModel):
         verbose_name = "Giao dịch kho"
         verbose_name_plural = "Lịch sử giao dịch kho (Nhập - Xuất - Tồn)"
         ordering = ['-transaction_date']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='inventory_transaction_quantity_positive',
+            ),
+        ]
 
     def __str__(self):
         return f"[{self.get_transaction_type_display()}] {self.product.name} - SL: {self.quantity} ({self.reference_code})"
@@ -85,4 +91,3 @@ class StockAdjustment(BaseModel):
 
     def __str__(self):
         return f"{self.code} - {self.product.name} (Lệch: {self.difference_quantity})"
-

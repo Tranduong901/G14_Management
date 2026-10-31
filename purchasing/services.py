@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from purchasing.models import PurchaseReceipt, PurchaseDetail, ReceiptStatus
+from catalog.models import Product
 from inventory.models import InventoryTransaction, TransactionType
 from devices.models import ProductItem, ItemStatus
 from finance.models import Payable, PayableStatus
@@ -32,6 +33,9 @@ def complete_purchase_receipt(receipt, user):
     - BR15: Automatically creates exactly ONE Payable record.
     - Idempotent: cannot be completed multiple times.
     """
+    PurchaseReceipt.objects.select_for_update().get(pk=receipt.pk)
+    receipt.refresh_from_db()
+
     if receipt.status == ReceiptStatus.COMPLETED:
         raise ValidationError(f"Phiếu nhập {receipt.code} đã ở trạng thái Hoàn tất trước đó.")
     if receipt.status == ReceiptStatus.CANCELLED:
@@ -49,7 +53,7 @@ def complete_purchase_receipt(receipt, user):
 
     # Process each product detail
     for detail in details:
-        product = detail.product
+        product = Product.objects.select_for_update().get(pk=detail.product_id)
         qty = detail.quantity
         line_total = detail.unit_price * Decimal(str(qty))
         total_amount += line_total
@@ -176,4 +180,3 @@ def cancel_purchase_receipt(receipt, user, reason=''):
         changes={'code': receipt.code, 'status': 'CANCELLED', 'reason': reason}
     )
     return receipt
-

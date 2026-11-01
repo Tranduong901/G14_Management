@@ -43,3 +43,19 @@ class AuditLog(models.Model):
         user_name = self.user.username if self.user else "Hệ thống"
         return f"[{self.created_at.strftime('%Y-%m-%d %H:%M:%S')}] {user_name} - {self.get_action_display()} - {self.object_repr}"
 
+
+class AccessDeniedLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='access_denied_logs',
+    )
+    role = models.CharField(max_length=20, blank=True)
+    path = models.CharField(max_length=500)
+    method = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']

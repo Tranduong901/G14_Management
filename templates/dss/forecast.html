@@ -8,11 +8,28 @@
         <h4 class="fw-bold mb-1"><i class="bi bi-clock-history me-2 text-primary"></i>Dự báo nhu cầu bán hàng (DSS)</h4>
         <p class="text-muted small mb-0">Phương pháp trung bình động 3 kỳ tháng gần nhất (SMA-3M) từ giao dịch hoàn tất (FR-17, BR21, TC28)</p>
     </div>
+    {% if request.user.role == 'QL' or request.user.is_superuser %}
+    <form method="post" action="{% url 'dss:update_forecast_accuracy' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>Cập nhật kết quả kỳ trước
+        </button>
+    </form>
+    {% endif %}
 </div>
 
 <div class="alert alert-info py-2 small mb-4">
     <i class="bi bi-info-circle me-1"></i> <strong>Quy tắc BR21:</strong> Dự báo chỉ được tính khi sản phẩm có đủ ít nhất 3 kỳ tháng phát sinh giao dịch bán hoàn tất. Nếu không đủ thì hệ thống hiển thị trạng thái "Chưa đủ dữ liệu". DSS chỉ đọc dữ liệu, không tự động đặt hàng hay thay đổi giao dịch (BR22).
 </div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+</div>
+{% endfor %}
+{% endif %}
 
 <div class="card border-0 shadow-sm">
     <div class="table-responsive">
@@ -73,4 +90,3 @@
     </div>
 </div>
 {% endblock %}
-

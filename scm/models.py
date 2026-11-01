@@ -77,6 +77,7 @@ class PurchaseRequest(BaseModel):
         verbose_name="Người phê duyệt"
     )
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời điểm duyệt")
+    submitted_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời điểm gửi duyệt")
     rejection_reason = models.TextField(
         blank=True,
         verbose_name="Lý do từ chối (bắt buộc khi từ chối theo Mục 2.5.8)"

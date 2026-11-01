@@ -24,7 +24,8 @@ def submit_purchase_request(request_obj, user):
         raise ValidationError("Đề nghị nhập hàng chưa có sản phẩm nào.")
 
     request_obj.status = PurchaseRequestStatus.PENDING
-    request_obj.save(update_fields=['status'])
+    request_obj.submitted_at = timezone.now()
+    request_obj.save(update_fields=['status', 'submitted_at'])
 
     log_activity(
         user=user,
@@ -181,4 +182,3 @@ def get_supplier_performance():
         })
 
     return scorecards
-

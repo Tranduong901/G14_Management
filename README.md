@@ -109,7 +109,16 @@ Lệnh này sẽ tự động khởi tạo:
 - Lịch sử bán hàng đa kỳ để tính toán dự báo nhu cầu trung bình động 3 tháng.
 - Phiếu nhập hàng, Serial/IMEI trong kho, khoản công nợ và sổ quỹ tiền mặt.
 
-### Bước 6: Chạy kiểm thử tự động (14 Test Cases bắt buộc)
+Sau khi kết thúc một kỳ dự báo, cập nhật số bán thực tế và TC28:
+```powershell
+python manage.py update_forecast_accuracy
+```
+QL cũng có thể bấm **Cập nhật kết quả kỳ trước** ngay trên màn hình Dự báo nhu cầu;
+hệ thống chỉ cập nhật các kỳ nhỏ hơn tháng hiện tại.
+Dashboard quản trị cung cấp nhóm số liệu kiểm soát TC01–TC29; TC26 mặc định
+coi đề nghị ở trạng thái chờ duyệt quá 48 giờ là quá hạn.
+
+### Bước 6: Chạy kiểm thử tự động
 ```powershell
 python manage.py test tests
 ```

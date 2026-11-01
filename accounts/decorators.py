@@ -3,6 +3,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.contrib import messages
 from accounts.models import Role
+from auditlog.models import AccessDeniedLog
 
 def role_required(allowed_roles=None):
     """
@@ -27,6 +28,12 @@ def role_required(allowed_roles=None):
                 return view_func(request, *args, **kwargs)
 
             messages.error(request, "Bạn không có quyền truy cập vào chức năng này (Mã lỗi: BR01).")
+            AccessDeniedLog.objects.create(
+                user=request.user,
+                role=getattr(request.user, 'role', ''),
+                path=request.path,
+                method=request.method,
+            )
             # If request is AJAX or expects JSON, or redirect back
             referer = request.META.get('HTTP_REFERER')
             if referer and referer != request.build_absolute_uri():
@@ -46,4 +53,3 @@ class RoleRequiredMixin:
             return super().dispatch(request, *args, **kwargs)
         messages.error(request, "Bạn không có quyền thực hiện hành động này (Mã lỗi: BR01).")
         return redirect('reports:dashboard')
-

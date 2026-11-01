@@ -10,6 +10,7 @@ from reports.services import (
     get_revenue_report_data,
     get_customer_report_data
 )
+from reports.control_metrics import get_control_metrics
 from catalog.models import Product, Supplier, ProductCategory
 from purchasing.models import PurchaseReceipt, ReceiptStatus
 from finance.models import CashLedger, Payable
@@ -43,6 +44,7 @@ def dashboard_view(request):
     return render(request, 'reports/dashboard.html', {
         'kpis': kpis,
         'chart_data_json': json.dumps(chart_data),
+        'control_metrics': get_control_metrics(),
         'low_stock_products': low_stock_products[:5],
         'overdue_payables': overdue_payables,
         'pending_requests': pending_requests,
@@ -148,4 +150,3 @@ def financial_report_view(request):
         'recent_ledgers': recent_ledgers,
         'overdue_payables': overdue_payables,
     })
-

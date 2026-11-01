@@ -48,6 +48,38 @@ def forecast_demand_sma(product, n_periods=3):
     forecast_value = sum(recent_quantities) / len(recent_quantities)
     return round(forecast_value, 1)
 
+
+def update_forecast_accuracy(forecast_result):
+    """Update actual sales and TC28 error rate for a forecast month."""
+    year, month = (int(value) for value in forecast_result.forecast_period[:7].split('-'))
+    actual = (
+        SalesOrderDetail.objects.filter(
+            product=forecast_result.product,
+            order__status=OrderStatus.COMPLETED,
+            order__order_date__year=year,
+            order__order_date__month=month,
+        ).aggregate(total=Sum('quantity'))['total']
+        or 0
+    )
+    forecast_result.actual_quantity = actual
+    if actual > 0:
+        actual_decimal = Decimal(str(actual))
+        forecast_result.error_rate = round(
+            abs(forecast_result.forecasted_quantity - actual_decimal)
+            / actual_decimal * Decimal('100'),
+            2,
+        )
+    else:
+        forecast_result.error_rate = None
+    forecast_result.save(update_fields=['actual_quantity', 'error_rate'])
+    return forecast_result
+
+
+def get_closed_forecast_results():
+    """Return forecast results whose forecast month has ended."""
+    current_period = timezone.localdate().strftime('%Y-%m')
+    return ForecastResult.objects.filter(forecast_period__lt=current_period)
+
 def get_approved_on_order_qty(product):
     """Calculates quantity already approved in purchase requests but not yet received."""
     qty = (

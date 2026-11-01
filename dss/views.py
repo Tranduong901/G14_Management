@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from accounts.models import Role
 from accounts.decorators import role_required
 from catalog.models import Product
@@ -10,7 +11,9 @@ from dss.services import (
     calculate_procurement_suggestion,
     get_monthly_sales_history,
     forecast_demand_sma,
-    optimize_procurement_ortools
+    optimize_procurement_ortools,
+    update_forecast_accuracy,
+    get_closed_forecast_results,
 )
 from dss.models import ForecastResult
 
@@ -50,6 +53,28 @@ def dss_forecast_view(request):
     return render(request, 'dss/forecast.html', {
         'forecast_data': forecast_data,
     })
+
+
+@login_required
+@role_required([Role.QL, Role.ADMIN])
+def update_forecast_accuracy_view(request):
+    """Close forecast periods and calculate actual quantity/error rate (TC28)."""
+    if request.method != 'POST':
+        messages.error(request, 'Thao tác cập nhật kết quả kỳ trước phải dùng phương thức POST.')
+        return redirect('dss:forecast')
+
+    with transaction.atomic():
+        results = get_closed_forecast_results()
+        updated = 0
+        for result in results:
+            update_forecast_accuracy(result)
+            updated += 1
+
+    messages.success(
+        request,
+        f'Đã cập nhật kết quả thực tế và độ lệch cho {updated} kỳ dự báo.',
+    )
+    return redirect('dss:forecast')
 
 @login_required
 @role_required([Role.QL, Role.KHO, Role.ADMIN])
@@ -94,4 +119,3 @@ def dss_optimizer_view(request):
         'budget': budget,
         'result': result,
     })
-

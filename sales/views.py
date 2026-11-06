@@ -11,6 +11,7 @@ from sales.models import SalesOrder, SalesOrderDetail, OrderStatus, PaymentMetho
 from sales.forms import SalesOrderForm, SalesOrderDetailFormSet, OrderCompleteForm
 from sales.services import complete_sales_order, cancel_sales_order, generate_order_code
 from catalog.models import Product, Customer
+from inventory.models import Warehouse
 
 @login_required
 @role_required([Role.QL, Role.BH, Role.KT, Role.ADMIN])
@@ -71,11 +72,20 @@ def order_detail_view(request, pk):
 def order_create_view(request):
     if request.method == 'POST':
         form = SalesOrderForm(request.POST)
+        if request.user.branch_id:
+            form.fields['warehouse'].required = True
         formset = SalesOrderDetailFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
             order = form.save(commit=False)
             order.code = generate_order_code()
             order.staff = request.user
+            order.branch = request.user.branch
+            if order.warehouse and not request.user.can_access_branch(order.warehouse.branch):
+                form.add_error('warehouse', 'Bạn không có quyền thao tác kho thuộc chi nhánh này.')
+                return render(request, 'sales/order_form.html', {
+                    'form': form, 'formset': formset, 'products': Product.objects.filter(status='ACTIVE'),
+                    'title': 'Tạo đơn bán hàng mới'
+                })
             order.created_by = request.user
             order.save()
 
@@ -87,9 +97,15 @@ def order_create_view(request):
             return redirect('sales:order_detail', pk=order.pk)
     else:
         form = SalesOrderForm()
+        if request.user.branch_id:
+            form.fields['warehouse'].required = True
         formset = SalesOrderDetailFormSet()
 
     products = Product.objects.filter(status='ACTIVE')
+    warehouses = Warehouse.objects.filter(is_active=True)
+    if not request.user.is_superuser and request.user.data_scope != 'ALL' and request.user.branch_id:
+        warehouses = warehouses.filter(branch_id=request.user.branch_id)
+    form.fields['warehouse'].queryset = warehouses
     return render(request, 'sales/order_form.html', {
         'form': form,
         'formset': formset,
@@ -136,4 +152,3 @@ def order_invoice_view(request, pk):
         'order': order,
         'details': details,
     })
-

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-plus me-2 text-primary"></i>{{ title }}</h4>
+        <p class="text-muted small mb-0">Thiết lập loại hợp đồng, lương cơ bản, phụ cấp cố định và mức đóng bảo hiểm xã hội (D1).</p>
+    </div>
+    <a href="{% url 'hr:employee_detail' employee.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại hồ sơ nhân viên
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nhân viên ký kết</label>
+                    <input type="text" class="form-control" value="{{ employee.full_name }} ({{ employee.code }})" readonly>
+                    <input type="hidden" name="employee" value="{{ employee.pk }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Loại hợp đồng</label>
+                    {{ form.contract_type }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ngày bắt đầu</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ngày kết thúc (bỏ trống nếu vô thời hạn)</label>
+                    {{ form.end_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Lương cơ bản (VNĐ)</label>
+                    {{ form.base_salary }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Phụ cấp cố định (VNĐ)</label>
+                    {{ form.allowance }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Lương đóng BHXH (VNĐ)</label>
+                    {{ form.insurance_salary }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Vị trí công việc ghi trên HĐ</label>
+                    {{ form.position }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Chi nhánh làm việc</label>
+                    {{ form.branch }}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label fw-semibold ms-2">Kích hoạt làm hợp đồng chính thức hiện hành</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Ghi chú điều khoản</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4">
+                <a href="{% url 'hr:employee_detail' employee.pk %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-save me-1"></i> Lưu hợp đồng lao động
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

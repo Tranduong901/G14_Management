@@ -16,6 +16,14 @@ class PurchaseReceipt(BaseModel):
         related_name='purchase_receipts',
         verbose_name="Nhà cung cấp"
     )
+    warehouse = models.ForeignKey(
+        'inventory.Warehouse',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='purchase_receipts',
+        verbose_name="Kho nhập hàng"
+    )
     request = models.ForeignKey(
         'scm.PurchaseRequest',
         on_delete=models.SET_NULL,

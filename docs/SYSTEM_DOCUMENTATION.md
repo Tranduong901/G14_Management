@@ -160,15 +160,17 @@ Model người dùng tùy biến là `accounts.User`, kế thừa `AbstractUser`
 | `catalog.Supplier` | `code`, `name`, `phone`, `email`, `address`, `payment_terms_days`, `notes` |
 | `hr.Employee` | `code`, `full_name`, `department`, `position`, `phone`, `email`, `status`, `join_date`, `user` |
 
-`Product.get_current_stock()` đếm `devices.ProductItem` ở trạng thái `IN_STOCK` cho hàng có serial; với hàng không serial, tính tổng các `inventory.InventoryTransaction` theo loại `IN/ADJUST_INC` trừ `OUT/ADJUST_DEC/WARRANTY_OUT`.
+`Product.get_current_stock(branch=None, warehouse=None)` đếm `devices.ProductItem` ở trạng thái `IN_STOCK` cho hàng có serial; với hàng không serial, tính tổng các `inventory.InventoryTransaction` theo loại `IN/ADJUST_INC` trừ `OUT/ADJUST_DEC/WARRANTY_OUT`. Có thể lọc theo chi nhánh hoặc kho. Khi không truyền bộ lọc, dữ liệu cũ chưa gắn kho vẫn được tính trong tổng tồn toàn hệ thống.
+
+`inventory.Warehouse` thuộc một `accounts.Branch`. Phiếu nhập, đơn bán, giao dịch kho và ProductItem mới đều lưu kho liên quan. `inventory.services.transfer_stock()` tạo cặp giao dịch xuất/nhập và chuyển ProductItem giữa hai kho, nên không làm thay đổi tổng tồn toàn hệ thống.
 
 ### 3.3. Bán hàng và mua hàng
 
 | Model | Trường chính |
 |---|---|
-| `sales.SalesOrder` | `code`, `customer`, `staff`, `order_date`, `status`, `payment_method`, `payment_status`, `total_amount`, `completed_at`, `notes` |
+| `sales.SalesOrder` | `code`, `customer`, `staff`, `branch`, `warehouse`, `order_date`, `status`, `payment_method`, `payment_status`, `total_amount`, `completed_at`, `notes` |
 | `sales.SalesOrderDetail` | `order`, `product`, `quantity`, `unit_price`, `total_price`, `selected_serials_text` |
-| `purchasing.PurchaseReceipt` | `code`, `supplier`, `request`, `receipt_date`, `status`, `total_amount`, `emergency_reason`, `notes`, `completed_at` |
+| `purchasing.PurchaseReceipt` | `code`, `supplier`, `warehouse`, `request`, `receipt_date`, `status`, `total_amount`, `emergency_reason`, `notes`, `completed_at` |
 | `purchasing.PurchaseDetail` | `receipt`, `product`, `quantity`, `unit_price`, `total_price`, `serials_text` |
 
 Trạng thái nghiệp vụ chính:
@@ -201,6 +203,7 @@ Middleware và `auditlog.services.log_activity` được dùng để ghi vết c
 
 - `transaction_type`: `IN`, `OUT`, `ADJUST_INC`, `ADJUST_DEC`, `WARRANTY_OUT`.
 - `product`: FK đến `catalog.Product`, `PROTECT`.
+- `warehouse`: FK đến `inventory.Warehouse`, nullable để tương thích dữ liệu cũ.
 - `quantity`, `reference_code`, `notes`, `transaction_date`.
 
 Đây là lịch sử biến động kho; tồn hiện tại được tính từ các giao dịch hoặc đếm ProductItem tùy loại sản phẩm.
@@ -212,6 +215,7 @@ Middleware và `auditlog.services.log_activity` được dùng để ghi vết c
 - `status`: `IN_STOCK`, `SOLD`, `DEFECTIVE`, `RETURNED`.
 - `purchase_receipt`: FK nullable đến PurchaseReceipt, `SET_NULL`.
 - `sales_order`: FK nullable đến SalesOrder, `SET_NULL`.
+- `warehouse`: FK nullable đến Warehouse, `SET_NULL`.
 - `warranty_months`, `warranty_start_date`, `warranty_end_date`.
 
 Khi hoàn tất đơn bán, ProductItem chuyển từ `IN_STOCK` sang `SOLD` và kích hoạt ngày bắt đầu/kết thúc bảo hành.
@@ -416,4 +420,3 @@ Các hạng mục sau chưa được triển khai hoặc chưa có bằng chứn
 - `requirements.txt` dùng khoảng phiên bản, không khóa chính xác phiên bản; nên dùng lock file nếu cần tái lập môi trường.
 - Mật khẩu demo và `SECRET_KEY` trong `.env.example` chỉ phù hợp cho môi trường học tập/dev, không dùng nguyên trạng ở production.
 - Những quy tắc đang chỉ kiểm tra tại service nên vẫn cần bổ sung ràng buộc database hoặc cơ chế khóa nếu hệ thống chạy đồng thời nhiều worker/request.
-

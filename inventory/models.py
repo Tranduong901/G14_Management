@@ -10,7 +10,38 @@ class TransactionType(models.TextChoices):
     ADJUST_DEC = 'ADJUST_DEC', 'Điều chỉnh kiểm kê (Giảm)'
     WARRANTY_OUT = 'WARRANTY_OUT', 'Xuất kho đổi mới bảo hành'
 
+class Warehouse(BaseModel):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã kho")
+    name = models.CharField(max_length=150, verbose_name="Tên kho")
+    branch = models.ForeignKey(
+        'accounts.Branch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='warehouses',
+        verbose_name="Chi nhánh trực thuộc"
+    )
+    address = models.CharField(max_length=255, blank=True, verbose_name="Địa chỉ kho")
+    is_active = models.BooleanField(default=True, verbose_name="Đang hoạt động")
+
+    class Meta:
+        verbose_name = "Kho hàng"
+        verbose_name_plural = "Danh mục kho hàng"
+        ordering = ['code']
+
+    def __str__(self):
+        branch_str = f" - {self.branch.name}" if self.branch else ""
+        return f"{self.code} - {self.name}{branch_str}"
+
 class InventoryTransaction(BaseModel):
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transactions',
+        verbose_name="Kho hàng"
+    )
     transaction_type = models.CharField(
         max_length=20,
         choices=TransactionType.choices,
@@ -51,6 +82,14 @@ class AdjustmentStatus(models.TextChoices):
 
 class StockAdjustment(BaseModel):
     code = models.CharField(max_length=50, unique=True, verbose_name="Mã phiếu kiểm kê")
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_adjustments',
+        verbose_name="Kho kiểm kê"
+    )
     product = models.ForeignKey(
         'catalog.Product',
         on_delete=models.PROTECT,

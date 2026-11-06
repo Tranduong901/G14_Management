@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar2-plus me-2 text-primary"></i>{{ title }}</h4>
+        <p class="text-muted small mb-0">Hệ thống sẽ tự động quét toàn bộ nhân viên đang làm việc, lấy ngày công thực tế, hoa hồng đơn hàng F04 và tính thuế TNCN (D3).</p>
+    </div>
+    <a href="{% url 'hr:payroll_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width: 650px; margin: 0 auto;">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">{{ form.errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tháng tính lương <span class="text-danger">*</span></label>
+                    {{ form.month }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Năm tính lương <span class="text-danger">*</span></label>
+                    {{ form.year }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Số ngày làm việc tiêu chuẩn trong tháng</label>
+                    {{ form.standard_work_days }}
+                    <div class="form-text text-muted">Mặc định 26 ngày (áp dụng cho tuần làm việc 6 ngày) hoặc 22 ngày (nghỉ thứ 7 & CN).</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Ghi chú bảng lương</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4">
+                <a href="{% url 'hr:payroll_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-calculator me-1"></i> Khởi tạo & Tính lương tự động
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

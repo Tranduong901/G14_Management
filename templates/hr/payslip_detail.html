@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Phiếu lương - {{ employee.full_name }} ({{ period.code }}){% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2 text-primary"></i>Phiếu lương cá nhân (Payslip)</h4>
+        <p class="text-muted small mb-0">{{ employee.full_name }} &bull; Kỳ lương: {{ period.name }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if can_view_payroll %}
+        <a href="{% url 'hr:payroll_detail' period.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Bảng lương tổng
+        </a>
+        {% else %}
+        <a href="{% url 'hr:my_payslips' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Phiếu lương của tôi
+        </a>
+        {% endif %}
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer-fill me-1"></i> In phiếu lương
+        </button>
+    </div>
+</div>
+
+<!-- Khung Phiếu lương chuẩn in -->
+<div class="card border-0 shadow-sm mx-auto" style="max-width: 800px; background-color: #fff;">
+    <div class="card-body p-5">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+            <div>
+                <h4 class="fw-bold text-primary mb-1">G14 MANAGEMENT SYSTEM</h4>
+                <div class="text-muted small">CÔNG TY CỔ PHẦN THIẾT BỊ CÔNG NGHỆ G14</div>
+                <div class="text-muted small">Chi nhánh: {{ employee.branch.name|default:"Hội sở chính" }}</div>
+            </div>
+            <div class="text-end">
+                <h5 class="fw-bold mb-1">PHIẾU BÁO LƯƠNG</h5>
+                <div class="badge bg-primary fs-6">{{ period.name }}</div>
+            </div>
+        </div>
+
+        <!-- Thông tin nhân sự -->
+        <div class="row g-2 mb-4 small">
+            <div class="col-6"><strong>Mã nhân viên:</strong> <code>{{ employee.code }}</code></div>
+            <div class="col-6"><strong>Họ và tên:</strong> <span class="fw-bold">{{ employee.full_name }}</span></div>
+            <div class="col-6"><strong>Phòng ban:</strong> {{ employee.get_department_display }}</div>
+            <div class="col-6"><strong>Chức danh:</strong> {{ employee.position }}</div>
+            <div class="col-6"><strong>Số TK ngân hàng:</strong> {{ employee.bank_account_number|default:"Chưa cập nhật" }} ({{ employee.bank_name|default:"-" }})</div>
+            <div class="col-6"><strong>Mã số thuế:</strong> {{ employee.tax_code|default:"-" }}</div>
+        </div>
+
+        <!-- Chi tiết các khoản -->
+        <table class="table table-bordered mb-4">
+            <thead class="table-light">
+                <tr>
+                    <th>Khoản mục thu nhập & khấu trừ</th>
+                    <th class="text-center" style="width: 120px;">Số lượng / Tỷ lệ</th>
+                    <th class="text-end" style="width: 180px;">Số tiền (VNĐ)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="table-group-divider fw-bold bg-light">
+                    <td colspan="2">I. CÁC KHOẢN THU NHẬP (GROSS)</td>
+                    <td class="text-end text-primary">{{ item.gross_income|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">1. Lương cơ bản theo hợp đồng</td>
+                    <td class="text-center">Tháng</td>
+                    <td class="text-end">{{ item.base_salary|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">2. Lương ngày công thực tế làm việc</td>
+                    <td class="text-center">{{ item.actual_work_days }}/{{ item.standard_work_days }} công</td>
+                    <td class="text-end">{{ item.actual_salary|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">3. Lương ngày nghỉ phép hưởng nguyên lương</td>
+                    <td class="text-center">{{ item.paid_leave_days }} ngày</td>
+                    <td class="text-end">{{ item.paid_leave_salary|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">4. Phụ cấp cố định (ăn trưa, đi lại, trách nhiệm)</td>
+                    <td class="text-center">-</td>
+                    <td class="text-end">{{ item.allowance|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">5. Thưởng hoa hồng doanh số bán hàng (F04)</td>
+                    <td class="text-center">Doanh số: {{ item.eligible_sales_revenue|floatformat:0 }} đ</td>
+                    <td class="text-end text-info fw-bold">{{ item.sales_commission|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">6. Tiền làm thêm giờ (OT 150%)</td>
+                    <td class="text-center">-</td>
+                    <td class="text-end">{{ item.ot_pay|floatformat:0 }} đ</td>
+                </tr>
+
+                <tr class="table-group-divider fw-bold bg-light">
+                    <td colspan="2">II. CÁC KHOẢN TRÍCH TRỪ BẢO HIỂM THEO LUẬT (10.5%)</td>
+                    <td class="text-end text-danger">-{{ item.total_insurance|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">1. Bảo hiểm Xã hội (BHXH)</td>
+                    <td class="text-center">8.0%</td>
+                    <td class="text-end">-{{ item.bhxh_amount|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">2. Bảo hiểm Y tế (BHYT)</td>
+                    <td class="text-center">1.5%</td>
+                    <td class="text-end">-{{ item.bhyt_amount|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">3. Bảo hiểm Thất nghiệp (BHTN)</td>
+                    <td class="text-center">1.0%</td>
+                    <td class="text-end">-{{ item.bhtn_amount|floatformat:0 }} đ</td>
+                </tr>
+
+                <tr class="table-group-divider fw-bold bg-light">
+                    <td colspan="2">III. THUẾ THU NHẬP CÁ NHÂN (TNCN)</td>
+                    <td class="text-end text-danger">-{{ item.income_tax|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">1. Giảm trừ bản thân</td>
+                    <td class="text-center">Cố định</td>
+                    <td class="text-end">{{ item.personal_deduction|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">2. Giảm trừ người phụ thuộc</td>
+                    <td class="text-center">{{ employee.dependents_count }} người</td>
+                    <td class="text-end">{{ item.dependent_deduction|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4">3. Thu nhập tính thuế TNCN</td>
+                    <td class="text-center">Biểu 7 bậc</td>
+                    <td class="text-end">{{ item.taxable_income|floatformat:0 }} đ</td>
+                </tr>
+                <tr>
+                    <td class="ps-4 fw-bold">4. Thuế TNCN phải nộp kỳ này</td>
+                    <td class="text-center">Khấu trừ</td>
+                    <td class="text-end text-danger fw-bold">-{{ item.income_tax|floatformat:0 }} đ</td>
+                </tr>
+
+                <tr class="table-group-divider table-success fs-5">
+                    <td colspan="2" class="fw-bold">THỰC LĨNH CHUYỂN KHOẢN (NET)</td>
+                    <td class="text-end fw-bold text-success">{{ item.net_salary|floatformat:0 }} đ</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Chữ ký xác nhận -->
+        <div class="row text-center mt-5 pt-3">
+            <div class="col-4">
+                <strong>Người lập phiếu</strong>
+                <div class="text-muted small mt-1">(Ký, họ tên)</div>
+            </div>
+            <div class="col-4">
+                <strong>Kế toán trưởng</strong>
+                <div class="text-muted small mt-1">(Ký, họ tên)</div>
+            </div>
+            <div class="col-4">
+                <strong>Người nhận tiền</strong>
+                <div class="text-muted small mt-1">(Ký, họ tên)</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

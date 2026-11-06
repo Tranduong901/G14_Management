@@ -43,6 +43,14 @@ class ProductItem(BaseModel):
         related_name='items',
         verbose_name="Đơn bán hàng"
     )
+    warehouse = models.ForeignKey(
+        'inventory.Warehouse',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='product_items',
+        verbose_name="Kho lưu trữ"
+    )
     warranty_months = models.PositiveIntegerField(default=12, verbose_name="Thời hạn bảo hành (tháng)")
     warranty_start_date = models.DateField(null=True, blank=True, verbose_name="Ngày kích hoạt bảo hành")
     warranty_end_date = models.DateField(null=True, blank=True, verbose_name="Hạn bảo hành")

@@ -9,13 +9,17 @@ def user_role_context(request):
             'is_bh': False,
             'is_kho': False,
             'is_kt': False,
+            'is_hr': False,
+            'can_view_payroll': False,
             'current_role': None,
+            'current_branch': None,
             'Role': Role,
         }
     
     user = request.user
     role = getattr(user, 'role', '')
     is_super = user.is_superuser
+    can_view_payroll = role in [Role.HR, Role.KT] or getattr(user, 'can_view_payroll', False)
 
     return {
         'is_admin': role == Role.ADMIN or is_super,
@@ -23,8 +27,11 @@ def user_role_context(request):
         'is_bh': role in [Role.BH, Role.ADMIN] or is_super,
         'is_kho': role in [Role.KHO, Role.ADMIN] or is_super,
         'is_kt': role in [Role.KT, Role.ADMIN] or is_super,
+        'is_hr': role in [Role.HR, Role.ADMIN] or is_super,
+        'can_view_payroll': can_view_payroll,
         'current_role': role,
         'current_role_display': user.get_role_display() if hasattr(user, 'get_role_display') else '',
+        'current_branch': getattr(user, 'branch', None),
         'Role': Role,
     }
 

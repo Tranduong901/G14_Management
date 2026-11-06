@@ -3,75 +3,133 @@
 {% block title %}{{ title }} - G14 SYSTEM{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-7">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-person-badge me-2 text-primary"></i>{{ title }}</h5>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-person-badge me-2 text-primary"></i>{{ title }}</h4>
+        <p class="text-muted small mb-0">Khai báo thông tin định danh, bảo hiểm, thuế, tài khoản ngân hàng và chi nhánh (D1).</p>
+    </div>
+    <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">
+                <strong>Vui lòng kiểm tra lại các trường lỗi:</strong>
+                {{ form.errors }}
             </div>
-            <div class="card-body p-4">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Mã nhân viên <span class="text-danger">*</span></label>
-                            {{ form.code }}
-                            {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors }}</div>{% endif %}
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
-                            {{ form.full_name }}
-                            {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors }}</div>{% endif %}
-                        </div>
-                    </div>
+            {% endif %}
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Phòng ban</label>
-                            {{ form.department }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Chức vụ / Vị trí</label>
-                            {{ form.position }}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
-                            {{ form.phone }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Email</label>
-                            {{ form.email }}
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Trạng thái</label>
-                            {{ form.status }}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Ngày vào làm</label>
-                            {{ form.join_date }}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Tài khoản liên kết</label>
-                            {{ form.user }}
-                        </div>
-                    </div>
-
-                    <div class="pt-3 border-top">
-                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                            <i class="bi bi-check-lg me-1"></i> Lưu nhân viên
-                        </button>
-                        <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary ms-2">Hủy bỏ</a>
-                    </div>
-                </form>
+            <!-- Nhóm 1: Thông tin cơ bản & Tổ chức -->
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="bi bi-person-vcard me-2"></i>1. Thông tin công tác & Chi nhánh</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Mã nhân viên <span class="text-danger">*</span></label>
+                    {{ form.code }}
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
+                    {{ form.full_name }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Chi nhánh trực thuộc</label>
+                    {{ form.branch }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Phòng ban</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Chức danh / Vị trí</label>
+                    {{ form.position }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Trạng thái làm việc</label>
+                    {{ form.status }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Ngày vào làm</label>
+                    {{ form.join_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tài khoản đăng nhập hệ thống</label>
+                    {{ form.user }}
+                </div>
             </div>
-        </div>
+
+            <!-- Nhóm 2: Thông tin cá nhân & Liên hệ -->
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="bi bi-geo-alt me-2"></i>2. Thông tin cá nhân & Địa chỉ</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Giới tính</label>
+                    {{ form.gender }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Ngày sinh</label>
+                    {{ form.dob }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Địa chỉ thường trú / tạm trú</label>
+                    {{ form.address }}
+                </div>
+            </div>
+
+            <!-- Nhóm 3: Pháp lý, Thuế & Ngân hàng -->
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="bi bi-bank me-2"></i>3. Pháp lý, Bảo hiểm & Tài khoản ngân hàng</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Số CCCD / CMND</label>
+                    {{ form.id_card_number }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Ngày cấp</label>
+                    {{ form.id_card_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Nơi cấp</label>
+                    {{ form.id_card_place }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Mã số thuế cá nhân</label>
+                    {{ form.tax_code }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Số sổ BHXH</label>
+                    {{ form.social_insurance_code }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Số người phụ thuộc (giảm trừ gia cảnh)</label>
+                    {{ form.dependents_count }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Số tài khoản ngân hàng</label>
+                    {{ form.bank_account_number }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tên ngân hàng & Chi nhánh</label>
+                    {{ form.bank_name }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3">
+                <a href="{% url 'hr:employee_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-save me-1"></i> Lưu thông tin nhân viên
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
-

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Danh sách yêu cầu phê duyệt - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-inbox-fill me-2 text-primary"></i>Hộp thư phê duyệt</h4>
+        <p class="text-muted small mb-0">Theo dõi các đề xuất, đơn xin nghỉ và bảng lương cần bạn xem xét hoặc do bạn gửi lên.</p>
+    </div>
+    {% if is_ql or is_admin %}
+    <a href="{% url 'approvals:workflow_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-gear-fill me-1"></i> Cấu hình quy trình duyệt
+    </a>
+    {% endif %}
+</div>
+
+<!-- Section 1: Cần tôi phê duyệt -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0 text-danger"><i class="bi bi-exclamation-circle-fill me-2"></i>Chờ tôi phê duyệt ({{ my_pending|length }})</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tiêu đề yêu cầu</th>
+                    <th>Quy trình</th>
+                    <th>Người trình duyệt</th>
+                    <th>Bước hiện tại</th>
+                    <th>Thời gian gửi</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in my_pending %}
+                <tr>
+                    <td>
+                        <a href="{% url 'approvals:approval_detail' item.pk %}" class="fw-bold text-decoration-none">
+                            {{ item.title }}
+                        </a>
+                        {% if item.notes %}<div class="text-muted small">{{ item.notes|truncatechars:60 }}</div>{% endif %}
+                    </td>
+                    <td><span class="badge bg-primary-subtle text-primary">{{ item.workflow.name }}</span></td>
+                    <td>{{ item.requester.get_full_name|default:item.requester.username }}</td>
+                    <td>
+                        <span class="badge bg-warning-subtle text-dark border">
+                            Bước {{ item.current_step }}: {{ item.current_step_config.name|default:"Phê duyệt" }}
+                        </span>
+                    </td>
+                    <td class="text-muted small">{{ item.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'approvals:approval_detail' item.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-check2-circle me-1"></i> Xem & Duyệt
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="bi bi-clipboard-check fs-2 text-success d-block mb-1"></i>
+                        Không có yêu cầu nào đang chờ bạn phê duyệt.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 2: Yêu cầu tôi đã gửi -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-send-check me-2"></i>Yêu cầu tôi đã tạo gần đây</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tiêu đề</th>
+                    <th>Quy trình</th>
+                    <th>Bước</th>
+                    <th>Trạng thái</th>
+                    <th>Thời gian gửi</th>
+                    <th class="text-end">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in my_submitted %}
+                <tr>
+                    <td class="fw-semibold">{{ item.title }}</td>
+                    <td>{{ item.workflow.name }}</td>
+                    <td>Bước {{ item.current_step }}</td>
+                    <td>
+                        {% if item.status == 'APPROVED' %}
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle"></i> Đã duyệt hoàn tất</span>
+                        {% elif item.status == 'REJECTED' %}
+                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i> Từ chối</span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-dark"><i class="bi bi-clock"></i> Đang chờ duyệt</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ item.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'approvals:approval_detail' item.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-3 text-muted">Bạn chưa gửi yêu cầu phê duyệt nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

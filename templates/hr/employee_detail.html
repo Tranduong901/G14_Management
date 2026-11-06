@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ employee.full_name }} ({{ employee.code }}) - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-person-circle me-2 text-primary"></i>{{ employee.full_name }} ({{ employee.code }})</h4>
+        <p class="text-muted small mb-0">{{ employee.position }} &bull; {{ employee.get_department_display }} &bull; {{ employee.branch.name|default:"Hội sở / Toàn công ty" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Danh sách
+        </a>
+        <a href="{% url 'hr:contract_create' employee.pk %}" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-plus me-1"></i> Ký hợp đồng mới
+        </a>
+        <a href="{% url 'hr:employee_edit' employee.pk %}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Sửa hồ sơ
+        </a>
+    </div>
+</div>
+
+<!-- Thẻ KPI / Tóm tắt -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-primary text-white">
+            <div class="small text-white-50">Hợp đồng hiện tại</div>
+            <div class="h5 fw-bold mb-0">
+                {% if employee.active_contract %}
+                {{ employee.active_contract.get_contract_type_display }}
+                {% else %}
+                Chưa ký HĐ
+                {% endif %}
+            </div>
+            <div class="small mt-1 text-white-50">
+                Lương CB: {{ employee.active_contract.base_salary|default:0|floatformat:0 }} đ
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-success text-white">
+            <div class="small text-white-50">Phép năm còn lại</div>
+            <div class="h5 fw-bold mb-0">{{ entitlement.remaining_days }} / {{ entitlement.total_days }} ngày</div>
+            <div class="small mt-1 text-white-50">Đã nghỉ: {{ entitlement.used_days }} ngày</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-info text-white">
+            <div class="small text-white-50">Phụ cấp & Giảm trừ</div>
+            <div class="h5 fw-bold mb-0">{{ employee.active_contract.allowance|default:0|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">{{ employee.dependents_count }} người phụ thuộc</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-dark text-white">
+            <div class="small text-white-50">Trạng thái làm việc</div>
+            <div class="h5 fw-bold mb-0">{{ employee.get_status_display }}</div>
+            <div class="small mt-1 text-white-50">Vào làm: {{ employee.join_date|date:"d/m/Y"|default:"Chưa rõ" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" id="employeeTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">
+            <i class="bi bi-info-circle me-1"></i> Thông tin cá nhân & Pháp lý
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="contracts-tab" data-bs-toggle="tab" data-bs-target="#contracts-pane" type="button" role="tab">
+            <i class="bi bi-file-earmark-text me-1"></i> Hợp đồng lao động ({{ contracts.count }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+            <i class="bi bi-clock-history me-1"></i> Lịch sử điều chuyển & Biến động ({{ history_records.count }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves-pane" type="button" role="tab">
+            <i class="bi bi-calendar2-check me-1"></i> Lịch sử nghỉ phép
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="employeeTabsContent">
+    <!-- Tab 1: Thông tin cá nhân -->
+    <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 fw-bold">Thông tin định danh & Pháp lý</div>
+                    <div class="card-body">
+                        <table class="table table-borderless small mb-0">
+                            <tr><td class="text-muted" style="width: 160px;">Mã số CCCD/CMND:</td><td class="fw-bold">{{ employee.id_card_number|default:"Chưa cập nhật" }}</td></tr>
+                            <tr><td class="text-muted">Ngày cấp / Nơi cấp:</td><td>{{ employee.id_card_date|date:"d/m/Y"|default:"-" }} / {{ employee.id_card_place|default:"-" }}</td></tr>
+                            <tr><td class="text-muted">Mã số thuế cá nhân:</td><td><code>{{ employee.tax_code|default:"Chưa có" }}</code></td></tr>
+                            <tr><td class="text-muted">Mã số sổ BHXH:</td><td><code>{{ employee.social_insurance_code|default:"Chưa có" }}</code></td></tr>
+                            <tr><td class="text-muted">Người phụ thuộc:</td><td><span class="badge bg-secondary">{{ employee.dependents_count }} người</span></td></tr>
+                            <tr><td class="text-muted">Tài khoản ngân hàng:</td><td class="fw-bold text-primary">{{ employee.bank_account_number|default:"Chưa cập nhật" }}</td></tr>
+                            <tr><td class="text-muted">Ngân hàng & Chi nhánh:</td><td>{{ employee.bank_name|default:"-" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 fw-bold">Thông tin liên hệ & Công tác</div>
+                    <div class="card-body">
+                        <table class="table table-borderless small mb-0">
+                            <tr><td class="text-muted" style="width: 160px;">Điện thoại:</td><td class="fw-bold">{{ employee.phone }}</td></tr>
+                            <tr><td class="text-muted">Email:</td><td>{{ employee.email|default:"-" }}</td></tr>
+                            <tr><td class="text-muted">Giới tính / Ngày sinh:</td><td>{{ employee.get_gender_display }} / {{ employee.dob|date:"d/m/Y"|default:"-" }}</td></tr>
+                            <tr><td class="text-muted">Địa chỉ thường trú:</td><td>{{ employee.address|default:"Chưa cập nhật" }}</td></tr>
+                            <tr><td class="text-muted">Chi nhánh trực thuộc:</td><td><span class="badge bg-primary-subtle text-primary">{{ employee.branch.name|default:"Toàn công ty" }}</span></td></tr>
+                            <tr><td class="text-muted">Tài khoản hệ thống:</td><td>{{ employee.user.username|default:"Chưa gán" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Hợp đồng lao động -->
+    <div class="tab-pane fade" id="contracts-pane" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã HĐ</th>
+                            <th>Loại hợp đồng</th>
+                            <th>Thời hạn</th>
+                            <th>Lương cơ bản</th>
+                            <th>Phụ cấp</th>
+                            <th>Lương đóng BH</th>
+                            <th>Chi nhánh</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contracts %}
+                        <tr>
+                            <td><code>{{ c.contract_code }}</code></td>
+                            <td class="fw-semibold">{{ c.get_contract_type_display }}</td>
+                            <td>{{ c.start_date|date:"d/m/Y" }} &rarr; {{ c.end_date|date:"d/m/Y"|default:"Vô thời hạn" }}</td>
+                            <td class="fw-bold text-success">{{ c.base_salary|floatformat:0 }} đ</td>
+                            <td>{{ c.allowance|floatformat:0 }} đ</td>
+                            <td>{{ c.insurance_salary|floatformat:0 }} đ</td>
+                            <td>{{ c.branch.name|default:"Hội sở" }}</td>
+                            <td>
+                                {% if c.is_active %}
+                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Hiệu lực</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Hết hiệu lực</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">Chưa có hợp đồng lao động nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Lịch sử biến động -->
+    <div class="tab-pane fade" id="history-pane" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ngày hiệu lực</th>
+                            <th>Loại biến động</th>
+                            <th>Số QĐ</th>
+                            <th>Thông tin cũ</th>
+                            <th>Thông tin mới</th>
+                            <th>Lý do</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history_records %}
+                        <tr>
+                            <td class="text-muted small">{{ h.event_date|date:"d/m/Y" }}</td>
+                            <td><span class="badge bg-info-subtle text-dark">{{ h.get_event_type_display }}</span></td>
+                            <td><code>{{ h.decision_number|default:"-" }}</code></td>
+                            <td class="small">{{ h.old_value|default:"-" }}</td>
+                            <td class="small fw-semibold text-primary">{{ h.new_value }}</td>
+                            <td class="small text-muted">{{ h.reason|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Chưa có bản ghi biến động nhân sự nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 4: Lịch sử nghỉ phép -->
+    <div class="tab-pane fade" id="leaves-pane" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Loại nghỉ</th>
+                            <th>Thời gian</th>
+                            <th>Số ngày</th>
+                            <th>Lý do</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lv in recent_leaves %}
+                        <tr>
+                            <td><code>{{ lv.code }}</code></td>
+                            <td>{{ lv.get_leave_type_display }}</td>
+                            <td>{{ lv.start_date|date:"d/m/Y" }} &rarr; {{ lv.end_date|date:"d/m/Y" }}</td>
+                            <td class="fw-bold">{{ lv.days_count }} ngày</td>
+                            <td class="text-muted small">{{ lv.reason }}</td>
+                            <td>
+                                {% if lv.status == 'APPROVED' %}
+                                <span class="badge bg-success-subtle text-success">Đã duyệt</span>
+                                {% elif lv.status == 'REJECTED' %}
+                                <span class="badge bg-danger-subtle text-danger">Từ chối</span>
+                                {% else %}
+                                <span class="badge bg-warning-subtle text-dark">Chờ duyệt</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Chưa có đơn xin nghỉ phép nào.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

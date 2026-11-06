@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Quản lý đơn xin nghỉ phép - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar2-check me-2 text-primary"></i>Đơn xin nghỉ phép (D2)</h4>
+        <p class="text-muted small mb-0">Tự động tính ngày phép còn lại, tích hợp quy trình phê duyệt đa cấp (Approval Engine).</p>
+    </div>
+    <a href="{% url 'hr:leave_create' %}" class="btn btn-primary fw-semibold">
+        <i class="bi bi-plus-lg me-1"></i> Tạo đơn xin nghỉ phép
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Nhân viên</th>
+                    <th>Chi nhánh</th>
+                    <th>Loại nghỉ phép</th>
+                    <th>Thời gian nghỉ</th>
+                    <th>Số ngày</th>
+                    <th>Lý do</th>
+                    <th>Người duyệt</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lv in page_obj %}
+                <tr>
+                    <td><code>{{ lv.code }}</code></td>
+                    <td class="fw-bold">{{ lv.employee.full_name }}</td>
+                    <td>{{ lv.employee.branch.name|default:"Hội sở" }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ lv.get_leave_type_display }}</span></td>
+                    <td class="text-muted small">{{ lv.start_date|date:"d/m/Y" }} &rarr; {{ lv.end_date|date:"d/m/Y" }}</td>
+                    <td class="fw-bold text-primary">{{ lv.days_count }} ngày</td>
+                    <td class="small text-muted">{{ lv.reason|truncatechars:40 }}</td>
+                    <td>{{ lv.approver.get_full_name|default:lv.approver.username|default:"Chưa duyệt" }}</td>
+                    <td>
+                        {% if lv.status == 'APPROVED' %}
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Đã phê duyệt</span>
+                        {% elif lv.status == 'REJECTED' %}
+                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-x-circle-fill"></i> Từ chối</span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-dark"><i class="bi bi-clock-fill"></i> Chờ duyệt</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Chưa có đơn xin nghỉ phép nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

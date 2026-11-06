@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết yêu cầu phê duyệt - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-check me-2 text-primary"></i>Chi tiết phê duyệt</h4>
+        <p class="text-muted small mb-0">{{ req.title }}</p>
+    </div>
+    <a href="{% url 'approvals:pending_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại hộp thư
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Thông tin yêu cầu & Tiến trình các bước -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="badge bg-primary-subtle text-primary fw-bold">{{ req.workflow.name }}</span>
+                {% if req.status == 'APPROVED' %}
+                <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill me-1"></i> ĐÃ DUYỆT HOÀN TẤT</span>
+                {% elif req.status == 'REJECTED' %}
+                <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill me-1"></i> BỊ TỪ CHỐI</span>
+                {% else %}
+                <span class="badge bg-warning text-dark fs-6"><i class="bi bi-clock-fill me-1"></i> ĐANG CHỜ DUYỆT</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">{{ req.title }}</h5>
+                <div class="row g-2 mb-3 small">
+                    <div class="col-sm-6"><strong>Người trình:</strong> {{ req.requester.get_full_name|default:req.requester.username }}</div>
+                    <div class="col-sm-6"><strong>Thời gian gửi:</strong> {{ req.created_at|date:"d/m/Y H:i" }}</div>
+                    {% if req.notes %}
+                    <div class="col-12 mt-2">
+                        <strong>Ghi chú:</strong>
+                        <div class="p-2 bg-light rounded mt-1">{{ req.notes }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <hr>
+                <h6 class="fw-semibold text-secondary small text-uppercase mb-3">Tiến trình các bước phê duyệt:</h6>
+                <div class="list-group">
+                    {% for step in workflow_steps %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center {% if step.step_number == req.current_step and req.status == 'PENDING' %}list-group-item-warning{% elif step.step_number < req.current_step or req.status == 'APPROVED' %}list-group-item-light{% endif %}">
+                        <div>
+                            <span class="badge bg-secondary me-2">Bước {{ step.step_number }}</span>
+                            <strong>{{ step.name }}</strong>
+                            <div class="text-muted small">
+                                {% if step.specific_approver %}
+                                    Chỉ định: {{ step.specific_approver.get_full_name|default:step.specific_approver.username }}
+                                {% else %}
+                                    Vai trò: {{ step.get_approver_role_display }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            {% if req.status == 'APPROVED' or step.step_number < req.current_step %}
+                                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Đã duyệt</span>
+                            {% elif step.step_number == req.current_step and req.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Đang chờ tại bước này</span>
+                            {% elif step.step_number == req.current_step and req.status == 'REJECTED' %}
+                                <span class="badge bg-danger"><i class="bi bi-x-lg"></i> Bị từ chối</span>
+                            {% else %}
+                                <span class="badge bg-light text-muted border">Chưa tới</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Lịch sử thao tác -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Lịch sử phê duyệt & Ý kiến</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for act in action_logs %}
+                    <li class="list-group-item p-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ act.actor.get_full_name|default:act.actor.username }}</strong>
+                            <span class="text-muted small">{{ act.action_date|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="mt-1">
+                            {% if act.action == 'APPROVE' %}
+                            <span class="badge bg-success-subtle text-success me-2">Đồng ý phê duyệt (Bước {{ act.step_number }})</span>
+                            {% else %}
+                            <span class="badge bg-danger-subtle text-danger me-2">Từ chối (Bước {{ act.step_number }})</span>
+                            {% endif %}
+                            <span>{{ act.comment|default:"(Không có ý kiến thêm)" }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item p-3 text-muted text-center">Chưa có hành động duyệt nào được thực hiện.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Form ra quyết định duyệt hoặc thông tin đối tượng -->
+    <div class="col-md-5">
+        {% if can_approve %}
+        <div class="card border-0 shadow-sm mb-4 border-top border-primary border-3">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-pencil-square me-2"></i>Ra quyết định phê duyệt</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hành động của bạn:</label>
+                        <div class="d-flex gap-4">
+                            {% for radio in form.action %}
+                            <div class="form-check">
+                                {{ radio.tag }}
+                                <label class="form-check-label fw-semibold" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ý kiến phê duyệt / Lý do từ chối:</label>
+                        {{ form.comment }}
+                        {% if form.comment.errors %}
+                        <div class="text-danger small mt-1">{{ form.comment.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i> Xác nhận quyết định
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if target_obj %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-link-45deg me-2"></i>Chứng từ gốc đính kèm</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Loại đối tượng:</strong> {{ req.content_type.name|title }}</p>
+                <p class="mb-2"><strong>Mã / Tên:</strong> {{ target_obj }}</p>
+                {% if target_obj.code %}
+                <p class="mb-2"><strong>Mã hiệu:</strong> <code>{{ target_obj.code }}</code></p>
+                {% endif %}
+                {% if target_obj.total_amount %}
+                <p class="mb-2"><strong>Số tiền:</strong> <span class="text-danger fw-bold">{{ target_obj.total_amount|floatformat:0 }} VNĐ</span></p>
+                {% elif target_obj.total_net %}
+                <p class="mb-2"><strong>Tổng thực lĩnh:</strong> <span class="text-danger fw-bold">{{ target_obj.total_net|floatformat:0 }} VNĐ</span></p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

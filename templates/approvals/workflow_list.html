@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Cấu hình quy trình phê duyệt - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Engine phê duyệt đa cấp</h4>
+        <p class="text-muted small mb-0">Cấu hình các bước phê duyệt áp dụng cho Đơn nghỉ phép, Đề nghị nhập hàng và Bảng chi lương.</p>
+    </div>
+    <a href="{% url 'approvals:pending_list' %}" class="btn btn-outline-primary">
+        <i class="bi bi-inbox-fill me-1"></i> Xem danh sách chờ duyệt
+    </a>
+</div>
+
+<div class="row g-4">
+    {% for wf in workflows %}
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
+                <span class="badge bg-primary-subtle text-primary fw-bold">{{ wf.get_workflow_type_display }}</span>
+                {% if wf.is_active %}
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Kích hoạt</span>
+                {% else %}
+                <span class="badge bg-secondary">Tạm tắt</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-2">{{ wf.name }}</h5>
+                <p class="text-muted small mb-3">{{ wf.description|default:"Không có mô tả chi tiết." }}</p>
+
+                <h6 class="fw-semibold text-secondary small text-uppercase mb-2">Các bước duyệt hiện hành ({{ wf.steps.count }} bước):</h6>
+                <ul class="list-group list-group-flush small mb-3">
+                    {% for step in wf.steps.all %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-light text-dark border me-1">Bước {{ step.step_number }}</span>
+                            <span class="fw-medium">{{ step.name }}</span>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-dark">
+                            {% if step.specific_approver %}
+                                {{ step.specific_approver.get_full_name|default:step.specific_approver.username }}
+                            {% else %}
+                                Vai trò: {{ step.get_approver_role_display }}
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item px-0 text-muted">Chưa cấu hình bước duyệt nào.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer bg-white border-top-0 pb-3">
+                <a href="{% url 'approvals:workflow_edit' wf.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-gear-fill me-1"></i> Cấu hình quy trình & các bước
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

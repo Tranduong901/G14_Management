@@ -62,19 +62,33 @@ class Product(BaseModel):
     def __str__(self):
         return f"[{self.code}] {self.name}"
 
-    def get_current_stock(self):
+    def get_current_stock(self, branch=None, warehouse=None):
         """
         Calculates available in-stock quantity according to business rules:
         - If has_serial: count of ProductItem in status 'IN_STOCK'
         - If not has_serial: net sum of InventoryTransaction
+
+        A warehouse filter is authoritative. A branch filter includes all
+        warehouses in that branch. With no filter, legacy unassigned stock is
+        included in the company-wide total.
         """
         if self.has_serial:
             from devices.models import ProductItem
-            return ProductItem.objects.filter(product=self, status='IN_STOCK').count()
+            items = ProductItem.objects.filter(product=self, status='IN_STOCK')
+            if warehouse is not None:
+                items = items.filter(warehouse=warehouse)
+            elif branch is not None:
+                items = items.filter(warehouse__branch=branch)
+            return items.count()
         else:
             from inventory.models import InventoryTransaction
+            transactions = InventoryTransaction.objects.filter(product=self)
+            if warehouse is not None:
+                transactions = transactions.filter(warehouse=warehouse)
+            elif branch is not None:
+                transactions = transactions.filter(warehouse__branch=branch)
             total = 0
-            for tx in InventoryTransaction.objects.filter(product=self):
+            for tx in transactions:
                 if tx.transaction_type in ['IN', 'ADJUST_INC']:
                     total += tx.quantity
                 elif tx.transaction_type in ['OUT', 'ADJUST_DEC', 'WARRANTY_OUT']:

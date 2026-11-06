@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Cấu hình quy trình {{ workflow.name }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-gear-fill me-2 text-primary"></i>Cấu hình: {{ workflow.name }}</h4>
+        <p class="text-muted small mb-0">Thiết lập các cấp phê duyệt, phân quyền vai trò duyệt hoặc chỉ định đích danh người duyệt.</p>
+    </div>
+    <a href="{% url 'approvals:workflow_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0">Thông tin quy trình</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên quy trình</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả / Hướng dẫn</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        {{ form.is_active }}
+                        <label class="form-check-label fw-semibold ms-2">Đang kích hoạt quy trình</label>
+                    </div>
+                    <button type="submit" name="update_workflow" class="btn btn-primary w-100">
+                        <i class="bi bi-save me-1"></i> Lưu thông tin quy trình
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">Các bước duyệt theo thứ tự</h6>
+                <span class="badge bg-primary">{{ steps.count }} bước</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">Thứ tự</th>
+                            <th>Tên bước</th>
+                            <th>Người / Vai trò duyệt</th>
+                            <th>Cuối cùng?</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for step in steps %}
+                        <tr>
+                            <td class="text-center"><span class="badge bg-secondary">#{{ step.step_number }}</span></td>
+                            <td class="fw-medium">{{ step.name }}</td>
+                            <td>
+                                {% if step.specific_approver %}
+                                    <span class="badge bg-info-subtle text-dark"><i class="bi bi-person"></i> {{ step.specific_approver.get_full_name|default:step.specific_approver.username }}</span>
+                                {% else %}
+                                    <span class="badge bg-primary-subtle text-primary">Vai trò: {{ step.get_approver_role_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if step.is_final_step %}
+                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check2"></i> Bước kết thúc</span>
+                                {% else %}
+                                <span class="text-muted small">Chuyển tiếp</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'approvals:step_delete' workflow.pk step.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bước duyệt này?');" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">Chưa có bước duyệt nào được tạo.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Step Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-plus-circle me-1 text-success"></i>Thêm bước duyệt mới</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Thứ tự bước</label>
+                            {{ step_form.step_number }}
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small fw-semibold">Tên bước duyệt</label>
+                            {{ step_form.name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Vai trò duyệt</label>
+                            {{ step_form.approver_role }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Hoặc Người duyệt cụ thể</label>
+                            {{ step_form.specific_approver }}
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                {{ step_form.is_final_step }}
+                                <label class="form-check-label small fw-semibold ms-2">Đánh dấu là bước phê duyệt cuối cùng (hoàn tất quy trình)</label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" name="add_step" class="btn btn-success fw-semibold">
+                                <i class="bi bi-plus-lg me-1"></i> Thêm bước duyệt
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

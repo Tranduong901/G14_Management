@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Tổng hợp ngày công kỳ {{ period_str }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar3-range me-2 text-primary"></i>Tổng hợp công theo kỳ (D2)</h4>
+        <p class="text-muted small mb-0">Tổng hợp ngày công thực tế, giờ làm thêm OT, ngày nghỉ hưởng lương và nghỉ không lương để phục vụ tính lương.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" name="recalculate" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-clockwise me-1"></i> Tính toán lại kỳ công
+            </button>
+        </form>
+        <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Bảng chấm công
+        </a>
+    </div>
+</div>
+
+<!-- Bộ lọc tháng/năm -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text">Tháng</span>
+                    <input type="number" name="month" min="1" max="12" class="form-control" value="{{ month }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text">Năm</span>
+                    <input type="number" name="year" min="2020" max="2050" class="form-control" value="{{ year }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel"></i> Xem số liệu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã NV</th>
+                    <th>Họ và tên</th>
+                    <th>Chi nhánh</th>
+                    <th class="text-center">Công chuẩn</th>
+                    <th class="text-center text-primary">Công thực tế</th>
+                    <th class="text-center text-success">Nghỉ phép hưởng lương</th>
+                    <th class="text-center text-danger">Nghỉ không lương</th>
+                    <th class="text-center text-warning">Giờ làm thêm (OT)</th>
+                    <th class="text-center">Đi muộn/sớm</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in summaries %}
+                <tr>
+                    <td><code>{{ s.employee.code }}</code></td>
+                    <td class="fw-bold">{{ s.employee.full_name }}</td>
+                    <td>{{ s.employee.branch.name|default:"Hội sở" }}</td>
+                    <td class="text-center">{{ s.standard_days }}</td>
+                    <td class="text-center fw-bold text-primary">{{ s.actual_work_days }}</td>
+                    <td class="text-center fw-bold text-success">{{ s.paid_leave_days }}</td>
+                    <td class="text-center fw-bold text-danger">{{ s.unpaid_leave_days }}</td>
+                    <td class="text-center fw-bold text-warning">{{ s.ot_hours }}h</td>
+                    <td class="text-center">{{ s.late_early_count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        Chưa có dữ liệu tổng hợp cho kỳ {{ period_str }}. Hãy bấm nút "Tính toán lại kỳ công" ở trên.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -8,6 +8,12 @@ class Role(models.TextChoices):
     BH = 'BH', 'Nhân viên bán hàng (BH)'
     KHO = 'KHO', 'Nhân viên kho (KHO)'
     KT = 'KT', 'Kế toán (KT)'
+    HR = 'HR', 'Quản trị nhân sự (HR)'
+
+class DataScope(models.TextChoices):
+    ALL = 'ALL', 'Toàn hệ thống'
+    BRANCH = 'BRANCH', 'Theo chi nhánh'
+    PERSONAL = 'PERSONAL', 'Cá nhân'
 
 class BaseModel(models.Model):
     """Abstract base model with timestamps and audit trail fields."""
@@ -25,6 +31,21 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+class Branch(BaseModel):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã chi nhánh")
+    name = models.CharField(max_length=150, verbose_name="Tên chi nhánh")
+    phone = models.CharField(max_length=20, blank=True, verbose_name="Số điện thoại")
+    address = models.CharField(max_length=255, blank=True, verbose_name="Địa chỉ")
+    is_active = models.BooleanField(default=True, verbose_name="Đang hoạt động")
+
+    class Meta:
+        verbose_name = "Chi nhánh"
+        verbose_name_plural = "Danh mục chi nhánh"
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
 class User(AbstractUser):
     role = models.CharField(
         max_length=10,
@@ -33,6 +54,25 @@ class User(AbstractUser):
         verbose_name="Vai trò"
     )
     phone = models.CharField(max_length=20, blank=True, verbose_name="Số điện thoại")
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+        verbose_name="Chi nhánh làm việc"
+    )
+    data_scope = models.CharField(
+        max_length=20,
+        choices=DataScope.choices,
+        default=DataScope.ALL,
+        verbose_name="Phạm vi dữ liệu"
+    )
+    can_view_payroll = models.BooleanField(
+        default=False,
+        verbose_name="Quyền xem thông tin lương",
+        help_text="Cấp quyền xem bảng lương và phiếu lương cho Admin/Nhân sự cụ thể."
+    )
 
     class Meta:
         verbose_name = "Tài khoản người dùng"
@@ -64,4 +104,16 @@ class User(AbstractUser):
     @property
     def is_kt(self):
         return self.role == Role.KT or self.is_admin
+
+    @property
+    def is_hr(self):
+        return self.role == Role.HR or self.is_admin
+
+    def can_access_branch(self, branch):
+        if self.is_superuser or self.data_scope == DataScope.ALL:
+            return True
+        if not branch:
+            return True
+        branch_id = getattr(branch, 'id', branch)
+        return self.branch_id == branch_id
 

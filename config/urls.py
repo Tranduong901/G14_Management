@@ -32,6 +32,8 @@ urlpatterns = [
     path('dss/', include('dss.urls')),
     path('reports/', include('reports.urls')),
     path('auditlog/', include('auditlog.urls')),
+    path('approvals/', include('approvals.urls')),
+    path('crm/', include('crm.urls')),
 
     # REST API endpoints
     path('api/v1/', include(router.urls)),

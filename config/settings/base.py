@@ -30,6 +30,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'accounts.apps.AccountsConfig',
+    'approvals.apps.ApprovalsConfig',
     'catalog.apps.CatalogConfig',
     'hr.apps.HrConfig',
     'sales.apps.SalesConfig',
@@ -41,6 +42,7 @@ LOCAL_APPS = [
     'finance.apps.FinanceConfig',
     'scm.apps.ScmConfig',
     'dss.apps.DssConfig',
+    'crm.apps.CrmConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

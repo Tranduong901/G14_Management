@@ -67,6 +67,22 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select name="branch" class="form-select">
+                    <option value="">-- Tất cả chi nhánh --</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch.pk }}" {% if branch_filter == branch.pk|stringformat:"s" %}selected{% endif %}>{{ branch.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="warehouse" class="form-select">
+                    <option value="">-- Tất cả kho --</option>
+                    {% for warehouse in warehouses %}
+                    <option value="{{ warehouse.pk }}" {% if warehouse_filter == warehouse.pk|stringformat:"s" %}selected{% endif %}>{{ warehouse.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
                 <div class="form-check pt-2">
                     <input class="form-check-input" type="checkbox" name="low_stock" value="1" id="lowStockCheck" {% if filter_low_stock %}checked{% endif %}>
                     <label class="form-check-label small fw-semibold" for="lowStockCheck">Chỉ hàng tồn thấp</label>
@@ -162,4 +178,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

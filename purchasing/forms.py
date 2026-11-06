@@ -6,9 +6,10 @@ from catalog.models import Product, Supplier
 class PurchaseReceiptForm(forms.ModelForm):
     class Meta:
         model = PurchaseReceipt
-        fields = ['supplier', 'receipt_date', 'emergency_reason', 'notes']
+        fields = ['supplier', 'warehouse', 'receipt_date', 'emergency_reason', 'notes']
         widgets = {
             'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'warehouse': forms.Select(attrs={'class': 'form-select'}),
             'receipt_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'emergency_reason': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ghi lý do nếu nhập hàng ngoài kế hoạch...'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ghi chú phiếu nhập...'}),
@@ -32,4 +33,3 @@ PurchaseDetailFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
-

@@ -15,6 +15,7 @@ class PaymentMethod(models.TextChoices):
 class ReferenceType(models.TextChoices):
     SALES_ORDER = 'SALES_ORDER', 'Thu tiền bán hàng (Đơn hàng)'
     PAYABLE = 'PAYABLE', 'Chi thanh toán công nợ NCC'
+    PAYROLL = 'PAYROLL', 'Chi trả lương nhân viên (Bảng lương)'
     OTHER_INCOME = 'OTHER_INCOME', 'Thu khác'
     OTHER_EXPENSE = 'OTHER_EXPENSE', 'Chi khác'
     REVERSAL = 'REVERSAL', 'Bút toán đảo điều chỉnh'

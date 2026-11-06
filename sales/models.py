@@ -33,6 +33,22 @@ class SalesOrder(BaseModel):
         related_name='handled_sales_orders',
         verbose_name="Nhân viên bán hàng"
     )
+    branch = models.ForeignKey(
+        'accounts.Branch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sales_orders',
+        verbose_name="Chi nhánh bán"
+    )
+    warehouse = models.ForeignKey(
+        'inventory.Warehouse',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sales_orders',
+        verbose_name="Kho xuất hàng"
+    )
     order_date = models.DateTimeField(default=timezone.now, verbose_name="Thời điểm tạo đơn")
     status = models.CharField(
         max_length=20,

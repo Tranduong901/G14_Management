@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-bullseye me-2 text-primary"></i>{{ title }}</h4>
+        <p class="text-muted small mb-0">Quản lý cơ hội kinh doanh, giai đoạn theo phễu bán hàng và giá trị kỳ vọng (D4).</p>
+    </div>
+    <a href="{% url 'crm:opportunity_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">{{ form.errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Tên cơ hội bán hàng <span class="text-danger">*</span></label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Gắn với Lead tiềm năng</label>
+                    {{ form.lead }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Hoặc Khách hàng hiện hữu</label>
+                    {{ form.customer }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Giai đoạn bán hàng</label>
+                    {{ form.stage }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Xác suất thành công (%)</label>
+                    {{ form.probability }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Giá trị kỳ vọng (VNĐ)</label>
+                    {{ form.expected_revenue }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ngày dự kiến chốt</label>
+                    {{ form.expected_close_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Chuyên viên phụ trách</label>
+                    {{ form.assigned_to }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Chi nhánh</label>
+                    {{ form.branch }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Lý do thất bại nếu Closed Lost</label>
+                    {{ form.loss_reason }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Ghi chú diễn giải</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4">
+                <a href="{% url 'crm:opportunity_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-save me-1"></i> Lưu cơ hội bán hàng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -35,6 +35,13 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
     SalesOrder.objects.select_for_update().get(pk=order.pk)
     order.refresh_from_db()
 
+    if order.branch_id and order.warehouse_id and order.branch_id != order.warehouse.branch_id:
+        raise ValidationError("Kho xuất phải thuộc chi nhánh của đơn bán.")
+    if order.branch_id and not order.warehouse_id:
+        raise ValidationError("Đơn bán thuộc chi nhánh phải chỉ định kho xuất.")
+    if order.warehouse and user and not user.can_access_branch(order.warehouse.branch):
+        raise ValidationError("Bạn không có quyền xuất hàng từ kho thuộc chi nhánh này.")
+
     if order.status == OrderStatus.COMPLETED:
         raise ValidationError(f"Đơn hàng {order.code} đã hoàn tất trước đó. Không cho phép ghi nhận trùng doanh thu (Mã BR04).")
     if order.status == OrderStatus.CANCELLED:
@@ -55,7 +62,7 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
         total_amount += line_total
 
         # Check available stock (BR03)
-        available_stock = product.get_current_stock()
+        available_stock = product.get_current_stock(warehouse=order.warehouse)
         if available_stock < qty:
             raise ValidationError(
                 f"Sản phẩm '{product.name}' không đủ tồn kho khả dụng để hoàn tất đơn hàng "
@@ -71,6 +78,7 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
                     ProductItem.objects.select_for_update().filter(
                         product=product,
                         status=ItemStatus.IN_STOCK,
+                        warehouse=order.warehouse,
                     )[:qty]
                 )
                 if len(avail_items) < qty:
@@ -84,6 +92,7 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
                 ProductItem.objects.select_for_update().filter(
                     product=product,
                     serial_number__in=serials,
+                    warehouse=order.warehouse,
                 )
             )
             if len(items) != len(serials):
@@ -107,6 +116,7 @@ def complete_sales_order(order, payment_method=PaymentMethod.CASH, user=None):
             transaction_type=TransactionType.OUT,
             product=product,
             quantity=qty,
+            warehouse=order.warehouse,
             reference_code=order.code,
             notes=f"Xuất bán cho khách hàng: {order.customer.name}",
             created_by=user

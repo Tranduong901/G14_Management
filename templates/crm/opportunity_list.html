@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Cơ hội bán hàng (Opportunity) - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-bullseye me-2 text-primary"></i>Cơ hội bán hàng (Opportunity - D4)</h4>
+        <p class="text-muted small mb-0">Theo dõi giai đoạn bán hàng, xác suất thành công, giá trị kỳ vọng và chuyển đổi đơn bán F04.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'crm:sales_funnel' %}" class="btn btn-outline-info">
+            <i class="bi bi-funnel me-1"></i> Biểu đồ phễu bán hàng
+        </a>
+        <a href="{% url 'crm:opportunity_create' %}" class="btn btn-primary fw-semibold shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Tạo cơ hội mới
+        </a>
+    </div>
+</div>
+
+<!-- Lọc -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <input type="text" name="q" class="form-control" placeholder="Tìm theo tên cơ hội, mã cơ hội, khách hàng..." value="{{ q }}">
+            </div>
+            <div class="col-md-4">
+                <select name="stage" class="form-select">
+                    <option value="">-- Tất cả giai đoạn --</option>
+                    {% for code, label in stages %}
+                    <option value="{{ code }}" {% if stage_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel"></i> Lọc</button>
+                <a href="{% url 'crm:opportunity_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã cơ hội</th>
+                    <th>Tên cơ hội</th>
+                    <th>Khách hàng / Lead</th>
+                    <th class="text-end">Giá trị kỳ vọng</th>
+                    <th class="text-center">Xác suất</th>
+                    <th>Giai đoạn</th>
+                    <th>Chi nhánh</th>
+                    <th>Phụ trách</th>
+                    <th>Đơn bán F04</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for opp in page_obj %}
+                <tr>
+                    <td><code>{{ opp.code }}</code></td>
+                    <td class="fw-bold">
+                        <a href="{% url 'crm:opportunity_detail' opp.pk %}" class="text-decoration-none">
+                            {{ opp.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if opp.customer %}
+                            <span class="badge bg-light text-dark border">{{ opp.customer.name }}</span>
+                        {% elif opp.lead %}
+                            <span class="badge bg-secondary-subtle text-dark">Lead: {{ opp.lead.name }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold text-primary">{{ opp.expected_revenue|floatformat:0 }} đ</td>
+                    <td class="text-center">
+                        <div class="progress" style="height: 16px;">
+                            <div class="progress-bar {% if opp.probability >= 80 %}bg-success{% elif opp.probability >= 50 %}bg-info{% else %}bg-warning{% endif %}" style="width: {{ opp.probability }}%;">
+                                {{ opp.probability }}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if opp.stage == 'CLOSED_WON' %}
+                        <span class="badge bg-success"><i class="bi bi-trophy-fill"></i> Thành công (Won)</span>
+                        {% elif opp.stage == 'CLOSED_LOST' %}
+                        <span class="badge bg-danger">Thất bại (Lost)</span>
+                        {% elif opp.stage == 'NEGOTIATION' %}
+                        <span class="badge bg-warning text-dark">Đàm phán</span>
+                        {% elif opp.stage == 'PROPOSAL' %}
+                        <span class="badge bg-info text-dark">Báo giá</span>
+                        {% else %}
+                        <span class="badge bg-light text-dark border">{{ opp.get_stage_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ opp.branch.name|default:"Hội sở" }}</td>
+                    <td>{{ opp.assigned_to.get_full_name|default:opp.assigned_to.username }}</td>
+                    <td>
+                        {% if opp.converted_order %}
+                        <a href="{% url 'sales:order_detail' opp.converted_order.pk %}" class="badge bg-success-subtle text-success border text-decoration-none">
+                            <i class="bi bi-cart-check"></i> {{ opp.converted_order.code }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">Chưa tạo đơn</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'crm:opportunity_detail' opp.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">Chưa có cơ hội bán hàng nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

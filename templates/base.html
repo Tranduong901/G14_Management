@@ -130,6 +130,7 @@
         .role-badge-BH { background-color: #10b981; color: #fff; }
         .role-badge-KHO { background-color: #f59e0b; color: #fff; }
         .role-badge-KT { background-color: #06b6d4; color: #fff; }
+        .role-badge-HR { background-color: #ec4899; color: #fff; }
         .kpi-card {
             border-radius: 8px;
             padding: 20px;
@@ -161,6 +162,11 @@
             <li><a href="{% url 'catalog:product_list' %}" class="sidebar-link"><i class="bi bi-box-seam"></i> Sản phẩm</a></li>
             {% if is_bh or is_ql %}
             <li><a href="{% url 'catalog:customer_list' %}" class="sidebar-link"><i class="bi bi-people"></i> Khách hàng</a></li>
+            <div class="sidebar-section-title">Quản lý CRM (D4)</div>
+            <li><a href="{% url 'crm:lead_list' %}" class="sidebar-link"><i class="bi bi-funnel"></i> Khách tiềm năng (Lead)</a></li>
+            <li><a href="{% url 'crm:opportunity_list' %}" class="sidebar-link"><i class="bi bi-bullseye"></i> Cơ hội bán hàng</a></li>
+            <li><a href="{% url 'crm:activity_list' %}" class="sidebar-link"><i class="bi bi-calendar2-check"></i> Hoạt động chăm sóc</a></li>
+            <li><a href="{% url 'crm:sales_funnel' %}" class="sidebar-link"><i class="bi bi-graph-up-arrow"></i> Phễu bán hàng (Funnel)</a></li>
             {% endif %}
             {% if is_kho or is_kt or is_ql %}
             <li><a href="{% url 'catalog:supplier_list' %}" class="sidebar-link"><i class="bi bi-truck"></i> Nhà cung cấp</a></li>
@@ -177,6 +183,18 @@
             {% if is_bh or is_kho or is_ql %}
             <li><a href="{% url 'devices:device_list' %}" class="sidebar-link"><i class="bi bi-upc-scan"></i> Serial / IMEI</a></li>
             <li><a href="{% url 'devices:warranty_list' %}" class="sidebar-link"><i class="bi bi-shield-check"></i> Bảo hành / Đổi trả</a></li>
+            {% endif %}
+
+            <div class="sidebar-section-title">Nhân sự HR & Chấm công</div>
+            {% if is_admin or is_ql or is_hr %}
+            <li><a href="{% url 'hr:employee_list' %}" class="sidebar-link"><i class="bi bi-person-badge"></i> Hồ sơ nhân viên (D1)</a></li>
+            <li><a href="{% url 'hr:attendance_list' %}" class="sidebar-link"><i class="bi bi-calendar-check"></i> Chấm công thủ công (D2)</a></li>
+            <li><a href="{% url 'hr:attendance_summary' %}" class="sidebar-link"><i class="bi bi-calendar3-range"></i> Tổng hợp ngày công</a></li>
+            {% endif %}
+            <li><a href="{% url 'hr:leave_list' %}" class="sidebar-link"><i class="bi bi-calendar2-plus"></i> Đơn xin nghỉ phép</a></li>
+            <li><a href="{% url 'hr:my_payslips' %}" class="sidebar-link"><i class="bi bi-wallet2"></i> Phiếu lương của tôi</a></li>
+            {% if can_view_payroll %}
+            <li><a href="{% url 'hr:payroll_list' %}" class="sidebar-link"><i class="bi bi-cash-stack"></i> Bảng tính lương (D3)</a></li>
             {% endif %}
 
             {% if is_kt or is_ql %}
@@ -210,12 +228,15 @@
             <li><a href="{% url 'reports:customer_report' %}" class="sidebar-link"><i class="bi bi-person-check"></i> Báo cáo khách hàng</a></li>
             {% endif %}
 
+            <div class="sidebar-section-title">Hệ thống & Phê duyệt</div>
+            <li><a href="{% url 'approvals:pending_list' %}" class="sidebar-link"><i class="bi bi-inbox-fill"></i> Hộp thư phê duyệt</a></li>
             {% if is_admin or is_ql %}
-            <div class="sidebar-section-title">Hệ thống & Phân quyền</div>
-            <li><a href="{% url 'hr:employee_list' %}" class="sidebar-link"><i class="bi bi-person-badge"></i> Nhân viên</a></li>
+            <li><a href="{% url 'approvals:workflow_list' %}" class="sidebar-link"><i class="bi bi-diagram-3"></i> Cấu hình phê duyệt</a></li>
+            {% endif %}
             {% if is_admin %}
             <li><a href="{% url 'accounts:user_list' %}" class="sidebar-link"><i class="bi bi-person-gear"></i> Tài khoản</a></li>
             {% endif %}
+            {% if is_admin or is_ql %}
             <li><a href="{% url 'auditlog:auditlog_list' %}" class="sidebar-link"><i class="bi bi-fingerprint"></i> Nhật ký hệ thống</a></li>
             {% endif %}
         </ul>

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ period.name }} ({{ period.code }}) - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>{{ period.name }} ({{ period.code }})</h4>
+        <p class="text-muted small mb-0">Tháng {{ period.month }}/{{ period.year }} &bull; Công chuẩn: {{ period.standard_work_days }} ngày &bull; Trạng thái: <strong class="text-uppercase">{{ period.get_status_display }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'hr:payroll_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Bảng lương
+        </a>
+
+        {% if period.status == 'DRAFT' %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="recalculate">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-clockwise me-1"></i> Tính toán lại
+            </button>
+        </form>
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit_approval">
+            <button type="submit" class="btn btn-warning fw-semibold">
+                <i class="bi bi-send-check me-1"></i> Gửi duyệt bảng lương
+            </button>
+        </form>
+        {% elif period.status == 'APPROVED' %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="lock">
+            <button type="submit" class="btn btn-secondary fw-semibold">
+                <i class="bi bi-lock-fill me-1"></i> Khóa sổ bảng lương
+            </button>
+        </form>
+        {% if is_kt or is_ql %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="disburse">
+            <button type="submit" class="btn btn-success fw-semibold" onclick="return confirm('Xác nhận chi trả lương cho toàn bộ CBNV và ghi nhận bút toán chi sổ quỹ F08?');">
+                <i class="bi bi-cash me-1"></i> Thực hiện chi lương (Sổ quỹ F08)
+            </button>
+        </form>
+        {% endif %}
+        {% elif period.status == 'LOCKED' %}
+        {% if is_kt or is_ql %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="disburse">
+            <button type="submit" class="btn btn-success fw-semibold" onclick="return confirm('Xác nhận chi trả lương cho toàn bộ CBNV và ghi nhận bút toán chi sổ quỹ F08?');">
+                <i class="bi bi-cash me-1"></i> Thực hiện chi lương (Sổ quỹ F08)
+            </button>
+        </form>
+        {% endif %}
+        {% elif period.status == 'PAID' %}
+        <span class="badge bg-success p-2 fs-6"><i class="bi bi-check-all me-1"></i> ĐÃ CHI TRẢ LƯƠNG</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tổng quan tài chính bảng lương -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-primary text-white">
+            <div class="small text-white-50">Tổng thu nhập Gross</div>
+            <div class="h4 fw-bold mb-0">{{ period.total_gross|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">{{ items.count }} nhân viên</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-secondary text-white">
+            <div class="small text-white-50">Tổng trích nộp bảo hiểm (10.5%)</div>
+            <div class="h4 fw-bold mb-0">{{ period.total_insurance|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">BHXH 8%, BHYT 1.5%, BHTN 1%</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-danger text-white">
+            <div class="small text-white-50">Tổng thuế TNCN lũy tiến</div>
+            <div class="h4 fw-bold mb-0">{{ period.total_tax|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">Biểu lũy tiến 7 bậc</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-success text-white">
+            <div class="small text-white-50">Tổng thực lĩnh chi trả (Net)</div>
+            <div class="h4 fw-bold mb-0">{{ period.total_net|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">
+                {% if period.cash_ledger %}
+                Bút toán: {{ period.cash_ledger.code }}
+                {% else %}
+                Chưa hạch toán chi
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng chi tiết lương từng nhân viên -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0">Bảng chi tiết thanh toán lương CBNV</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã NV</th>
+                    <th>Họ và tên</th>
+                    <th>Chi nhánh</th>
+                    <th class="text-end">Lương CB</th>
+                    <th class="text-center">Công</th>
+                    <th class="text-end">Lương công</th>
+                    <th class="text-end">Phụ cấp</th>
+                    <th class="text-end">Hoa hồng F04</th>
+                    <th class="text-end fw-bold">Tổng Gross</th>
+                    <th class="text-end text-danger">Bảo hiểm</th>
+                    <th class="text-end text-danger">Thuế TNCN</th>
+                    <th class="text-end fw-bold text-success fs-6">Thực lĩnh Net</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Phiếu</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><code>{{ item.employee.code }}</code></td>
+                    <td class="fw-bold">{{ item.employee.full_name }}</td>
+                    <td>{{ item.employee.branch.name|default:"Hội sở" }}</td>
+                    <td class="text-end">{{ item.base_salary|floatformat:0 }} đ</td>
+                    <td class="text-center">{{ item.actual_work_days }}</td>
+                    <td class="text-end">{{ item.actual_salary|floatformat:0 }} đ</td>
+                    <td class="text-end">{{ item.allowance|floatformat:0 }} đ</td>
+                    <td class="text-end text-info fw-semibold">{{ item.sales_commission|floatformat:0 }} đ</td>
+                    <td class="text-end fw-bold">{{ item.gross_income|floatformat:0 }} đ</td>
+                    <td class="text-end text-danger">-{{ item.total_insurance|floatformat:0 }} đ</td>
+                    <td class="text-end text-danger">-{{ item.income_tax|floatformat:0 }} đ</td>
+                    <td class="text-end fw-bold text-success">{{ item.net_salary|floatformat:0 }} đ</td>
+                    <td>
+                        {% if item.status == 'PAID' %}
+                        <span class="badge bg-success-subtle text-success">Đã chi</span>
+                        {% else %}
+                        <span class="badge bg-secondary-subtle text-dark">Chưa chi</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'hr:payslip_detail' item.pk %}" class="btn btn-sm btn-outline-primary" title="In phiếu lương">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="14" class="text-center py-4 text-muted">Bảng lương chưa có nhân viên nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

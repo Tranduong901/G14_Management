@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ opp.name }} ({{ opp.code }}) - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-bullseye me-2 text-primary"></i>{{ opp.name }} ({{ opp.code }})</h4>
+        <p class="text-muted small mb-0">Phụ trách: <strong>{{ opp.assigned_to.get_full_name|default:opp.assigned_to.username }}</strong> &bull; Chi nhánh: {{ opp.branch.name|default:"Hội sở" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'crm:opportunity_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Danh sách
+        </a>
+        <a href="{% url 'crm:activity_create' %}?opportunity={{ opp.pk }}" class="btn btn-outline-info">
+            <i class="bi bi-calendar-event me-1"></i> Thêm hoạt động chăm sóc
+        </a>
+        <a href="{% url 'crm:opportunity_edit' opp.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Sửa cơ hội
+        </a>
+        {% if not opp.converted_order and opp.stage != 'CLOSED_WON' %}
+        <form method="post" action="{% url 'crm:opportunity_delete' opp.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger"
+                    onclick="return confirm('Xóa cơ hội này?');">
+                <i class="bi bi-trash me-1"></i> Xóa
+            </button>
+        </form>
+        {% endif %}
+        {% if opp.stage != 'CLOSED_WON' and not opp.converted_order %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="convert_to_order" value="1">
+            <button type="submit" class="btn btn-success fw-semibold shadow-sm" onclick="return confirm('Chuyển đổi cơ hội thành Khách hàng và tạo Đơn bán hàng (F04)?');">
+                <i class="bi bi-cart-check-fill me-1"></i> Chốt Won & Tạo Đơn bán F04
+            </button>
+        </form>
+        {% elif opp.converted_order %}
+        <a href="{% url 'sales:order_detail' opp.converted_order.pk %}" class="btn btn-success fw-semibold shadow-sm">
+            <i class="bi bi-receipt me-1"></i> Xem đơn hàng F04 ({{ opp.converted_order.code }})
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-primary text-white">
+            <div class="small text-white-50">Giá trị kỳ vọng</div>
+            <div class="h4 fw-bold mb-0">{{ opp.expected_revenue|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">Xác suất thành công: {{ opp.probability }}%</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-info text-white">
+            <div class="small text-white-50">Giai đoạn hiện tại</div>
+            <div class="h5 fw-bold mb-0">{{ opp.get_stage_display }}</div>
+            <div class="small mt-1 text-white-50">Dự kiến chốt: {{ opp.expected_close_date|date:"d/m/Y"|default:"Chưa đặt" }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-success text-white">
+            <div class="small text-white-50">Khách hàng liên kết</div>
+            <div class="h5 fw-bold mb-0">{{ opp.customer.name|default:opp.lead.name|default:"Chưa liên kết" }}</div>
+            <div class="small mt-1 text-white-50">SĐT: {{ opp.customer.phone|default:opp.lead.phone|default:"-" }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-dark text-white">
+            <div class="small text-white-50">Đơn bán hàng F04</div>
+            <div class="h5 fw-bold mb-0">
+                {% if opp.converted_order %}
+                {{ opp.converted_order.code }}
+                {% else %}
+                Chưa sinh đơn
+                {% endif %}
+            </div>
+            <div class="small mt-1 text-white-50">
+                {% if opp.converted_order %}{{ opp.converted_order.get_status_display }}{% else %}Đang đàm phán{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Thông tin cơ hội & Ghi chú -->
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 fw-bold">Thông tin chi tiết cơ hội</div>
+            <div class="card-body">
+                <table class="table table-borderless small mb-0">
+                    <tr><td class="text-muted" style="width: 150px;">Mã định danh:</td><td><code>{{ opp.code }}</code></td></tr>
+                    <tr><td class="text-muted">Tên cơ hội:</td><td class="fw-bold">{{ opp.name }}</td></tr>
+                    <tr><td class="text-muted">Lead gốc:</td><td>{{ opp.lead.name|default:"-" }}</td></tr>
+                    <tr><td class="text-muted">Khách hàng F04:</td><td>{{ opp.customer.name|default:"-" }}</td></tr>
+                    <tr><td class="text-muted">Chi nhánh:</td><td>{{ opp.branch.name|default:"Hội sở" }}</td></tr>
+                    <tr><td class="text-muted">Người phụ trách:</td><td>{{ opp.assigned_to.get_full_name|default:opp.assigned_to.username }}</td></tr>
+                    <tr><td class="text-muted">Ngày tạo:</td><td>{{ opp.created_at|date:"d/m/Y H:i" }}</td></tr>
+                    {% if opp.notes %}
+                    <tr><td class="text-muted">Ghi chú:</td><td>{{ opp.notes }}</td></tr>
+                    {% endif %}
+                    {% if opp.loss_reason %}
+                    <tr><td class="text-danger">Lý do thất bại:</td><td class="text-danger">{{ opp.loss_reason }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Lịch sử hoạt động chăm sóc -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Hoạt động chăm sóc khách hàng ({{ activities.count }})</h6>
+                <a href="{% url 'crm:activity_create' %}?opportunity={{ opp.pk }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg"></i> Thêm hoạt động
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for act in activities %}
+                    <li class="list-group-item p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div>
+                                <span class="badge bg-light text-dark border me-2">{{ act.get_activity_type_display }}</span>
+                                <strong class="text-primary">{{ act.subject }}</strong>
+                            </div>
+                            <span class="badge {% if act.status == 'COMPLETED' %}bg-success-subtle text-success{% else %}bg-warning-subtle text-dark{% endif %}">
+                                {{ act.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <i class="bi bi-calendar3 me-1"></i> Hạn: {{ act.due_date|date:"d/m/Y H:i" }} &bull; Phụ trách: {{ act.assigned_to.username }}
+                        </div>
+                        {% if act.result %}
+                        <div class="p-2 bg-light rounded small mt-2">
+                            <strong>Kết quả:</strong> {{ act.result }}
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item p-4 text-center text-muted">
+                        <i class="bi bi-telephone-x fs-2 text-muted d-block mb-1"></i>
+                        Chưa có hoạt động chăm sóc nào được ghi nhận cho cơ hội này.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

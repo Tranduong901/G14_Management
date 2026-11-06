@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Nhập chấm công thủ công - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar-plus me-2 text-primary"></i>Nhập chấm công thủ công (D2)</h4>
+        <p class="text-muted small mb-0">Chấm công hoàn toàn bằng hình thức nhập thủ công. Hệ thống tự động kiểm tra chống trùng ca/ngày.</p>
+    </div>
+    <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại bảng công
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">{{ form.errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nhân viên <span class="text-danger">*</span></label>
+                    {{ form.employee }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ngày chấm công <span class="text-danger">*</span></label>
+                    {{ form.date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ca làm việc <span class="text-danger">*</span></label>
+                    {{ form.shift }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Trạng thái chấm công</label>
+                    {{ form.status }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Giờ vào</label>
+                    {{ form.check_in }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Giờ ra</label>
+                    {{ form.check_out }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Ngày công</label>
+                    {{ form.work_units }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Giờ làm thêm (OT)</label>
+                    {{ form.ot_hours }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Ghi chú diễn giải</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4">
+                <a href="{% url 'hr:attendance_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-check2-circle me-1"></i> Lưu bản ghi chấm công
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

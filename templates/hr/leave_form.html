@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Lập đơn xin nghỉ phép - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar-plus me-2 text-primary"></i>Lập đơn xin nghỉ phép (D2)</h4>
+        <p class="text-muted small mb-0">Hệ thống tự động kiểm tra số ngày phép năm còn lại và chuyển sang quy trình phê duyệt.</p>
+    </div>
+    <a href="{% url 'hr:leave_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width: 750px; margin: 0 auto;">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger mb-4">{{ form.errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Nhân viên xin nghỉ <span class="text-danger">*</span></label>
+                    {{ form.employee }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Loại nghỉ phép <span class="text-danger">*</span></label>
+                    {{ form.leave_type }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Số ngày xin nghỉ <span class="text-danger">*</span></label>
+                    {{ form.days_count }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Từ ngày <span class="text-danger">*</span></label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Đến ngày <span class="text-danger">*</span></label>
+                    {{ form.end_date }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Lý do xin nghỉ <span class="text-danger">*</span></label>
+                    {{ form.reason }}
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4">
+                <a href="{% url 'hr:leave_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-send-fill me-1"></i> Nộp đơn xin nghỉ phép
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

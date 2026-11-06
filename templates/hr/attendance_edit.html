@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Chỉnh sửa chấm công & Audit Log - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-pencil-square me-2 text-primary"></i>Chỉnh sửa chấm công (D2)</h4>
+        <p class="text-muted small mb-0">{{ record.employee.full_name }} ({{ record.employee.code }}) &bull; Ngày {{ record.date|date:"d/m/Y" }} &bull; {{ record.shift.name }}</p>
+    </div>
+    <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại bảng công
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Form sửa & Lý do -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0">Cập nhật thông tin chấm công</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert alert-danger mb-3">{{ form.errors }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày công</label>
+                            {{ form.work_units }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giờ vào</label>
+                            {{ form.check_in }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giờ ra</label>
+                            {{ form.check_out }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giờ làm thêm (OT)</label>
+                            {{ form.ot_hours }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ghi chú</label>
+                            {{ form.notes }}
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 bg-warning-subtle rounded border border-warning-subtle">
+                                <label class="form-label fw-bold text-dark mb-1">
+                                    <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                                    Lý do chỉnh sửa chấm công <span class="text-danger">* (Bắt buộc theo BR quy định)</span>
+                                </label>
+                                {{ form.reason }}
+                                <div class="form-text text-muted small">Người thực hiện, thời điểm cập nhật và lý do sẽ được lưu vĩnh viễn trong nhật ký kiểm toán.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end border-top pt-3 mt-4">
+                        <a href="{% url 'hr:attendance_list' %}" class="btn btn-secondary me-2">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-save me-1"></i> Lưu thay đổi & Ghi Audit Log
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Lịch sử Audit Log -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-clock-history me-2"></i>Lịch sử chỉnh sửa bản ghi này ({{ audit_logs.count }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush small">
+                    {% for log in audit_logs %}
+                    <li class="list-group-item p-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong>{{ log.modified_by.get_full_name|default:log.modified_by.username }}</strong>
+                            <span class="text-muted">{{ log.modified_at|date:"d/m/Y H:i:s" }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger-subtle text-danger me-1">Lý do:</span>
+                            <span class="fw-semibold">{{ log.reason }}</span>
+                        </div>
+                        <div class="row g-2 p-2 bg-light rounded text-muted">
+                            <div class="col-6">
+                                <strong class="text-secondary">Trước sửa:</strong><br>
+                                Công: {{ log.old_values.work_units }} | {{ log.old_values.status }}<br>
+                                Giờ: {{ log.old_values.check_in|default:"-" }} - {{ log.old_values.check_out|default:"-" }}
+                            </div>
+                            <div class="col-6">
+                                <strong class="text-primary">Sau sửa:</strong><br>
+                                Công: {{ log.new_values.work_units }} | {{ log.new_values.status }}<br>
+                                Giờ: {{ log.new_values.check_in|default:"-" }} - {{ log.new_values.check_out|default:"-" }}
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item p-4 text-center text-muted">
+                        <i class="bi bi-shield-check fs-2 text-success d-block mb-1"></i>
+                        Bản ghi chấm công nguyên gốc, chưa từng bị chỉnh sửa.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Phiếu lương của tôi - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2 text-primary"></i>Phiếu lương của tôi</h4>
+        <p class="text-muted small mb-0">Tra cứu lịch sử thu nhập, chi tiết ngày công, hoa hồng và các khoản giảm trừ bảo hiểm, thuế của chính bạn.</p>
+    </div>
+</div>
+
+{% if error_message %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error_message }}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 bg-primary text-white rounded">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="fw-bold mb-1">{{ employee.full_name }} ({{ employee.code }})</h5>
+                <div>{{ employee.position }} &bull; {{ employee.get_department_display }} &bull; {{ employee.branch.name|default:"Hội sở chính" }}</div>
+                <div class="small text-white-50 mt-1">TK nhận lương: {{ employee.bank_account_number|default:"Chưa cập nhật" }} ({{ employee.bank_name|default:"-" }})</div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <span class="badge bg-white text-primary p-2 fs-6">
+                    <i class="bi bi-shield-check me-1"></i> Dữ liệu bảo mật cá nhân
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Kỳ lương</th>
+                    <th class="text-center">Ngày công</th>
+                    <th class="text-end">Thu nhập Gross</th>
+                    <th class="text-end text-danger">Bảo hiểm (10.5%)</th>
+                    <th class="text-end text-danger">Thuế TNCN</th>
+                    <th class="text-end fw-bold text-success fs-6">Thực lĩnh Net</th>
+                    <th>Trạng thái chi</th>
+                    <th class="text-end">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ps in payslips %}
+                <tr>
+                    <td class="fw-bold">{{ ps.period.name }}</td>
+                    <td class="text-center">{{ ps.actual_work_days }}/{{ ps.standard_work_days }}</td>
+                    <td class="text-end">{{ ps.gross_income|floatformat:0 }} đ</td>
+                    <td class="text-end text-danger">-{{ ps.total_insurance|floatformat:0 }} đ</td>
+                    <td class="text-end text-danger">-{{ ps.income_tax|floatformat:0 }} đ</td>
+                    <td class="text-end fw-bold text-success fs-6">{{ ps.net_salary|floatformat:0 }} đ</td>
+                    <td>
+                        {% if ps.status == 'PAID' %}
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Đã nhận tiền</span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-dark"><i class="bi bi-clock"></i> Chờ chuyển khoản</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'hr:payslip_detail' ps.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark-text me-1"></i> Xem phiếu
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">Chưa có phiếu lương nào cho tài khoản này.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

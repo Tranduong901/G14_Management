@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Báo cáo Phễu bán hàng (Sales Funnel) - G14 SYSTEM{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-funnel-fill me-2 text-primary"></i>Phễu bán hàng & Tỷ lệ chuyển đổi (Sales Funnel - D4)</h4>
+        <p class="text-muted small mb-0">Phân tích chuyển đổi từ Lead &rarr; Khảo sát nhu cầu &rarr; Báo giá &rarr; Đàm phán &rarr; Chốt đơn hàng F04.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'crm:opportunity_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-bullseye me-1"></i> Danh sách cơ hội
+        </a>
+        <a href="{% url 'crm:opportunity_create' %}" class="btn btn-primary fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Tạo cơ hội mới
+        </a>
+    </div>
+</div>
+
+<!-- Thẻ KPI Chuyển đổi chính -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-primary text-white">
+            <div class="small text-white-50">Tổng số Lead tiếp nhận</div>
+            <div class="h3 fw-bold mb-0">{{ report.total_leads }}</div>
+            <div class="small mt-1 text-white-50">Xác thực: {{ report.qualified_leads }} leads</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-info text-white">
+            <div class="small text-white-50">Cơ hội bán hàng đang mở</div>
+            <div class="h3 fw-bold mb-0">{{ report.total_opps }}</div>
+            <div class="small mt-1 text-white-50">Tỷ lệ Lead &rarr; Opp: {{ report.lead_to_opp_rate }}%</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-success text-white">
+            <div class="small text-white-50">Thành công (Closed Won)</div>
+            <div class="h3 fw-bold mb-0">{{ report.won_opps }}</div>
+            <div class="small mt-1 text-white-50">Tỷ lệ chốt thành công: {{ report.win_rate }}%</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3 bg-dark text-white">
+            <div class="small text-white-50">Tổng doanh số chốt Won</div>
+            <div class="h4 fw-bold mb-0">{{ report.total_won_value|floatformat:0 }} đ</div>
+            <div class="small mt-1 text-white-50">Tỷ lệ chuyển đổi chung: {{ report.overall_conversion_rate }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Cột trái: Biểu đồ Chart.js trực quan -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Biểu đồ các giai đoạn trong Phễu bán hàng</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="funnelChart" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Bảng số liệu chi tiết các giai đoạn -->
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-table me-2 text-secondary"></i>Chi tiết cơ hội theo từng giai đoạn</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Giai đoạn</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Doanh số kỳ vọng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in report.stages_data %}
+                        <tr>
+                            <td>
+                                {% if s.stage_code == 'CLOSED_WON' %}
+                                <span class="badge bg-success me-1"><i class="bi bi-trophy"></i></span>
+                                {% elif s.stage_code == 'CLOSED_LOST' %}
+                                <span class="badge bg-danger me-1"><i class="bi bi-x"></i></span>
+                                {% else %}
+                                <span class="badge bg-primary me-1"><i class="bi bi-arrow-right"></i></span>
+                                {% endif %}
+                                <span class="fw-semibold">{{ s.stage_label }}</span>
+                            </td>
+                            <td class="text-center fw-bold">{{ s.count }}</td>
+                            <td class="text-end fw-bold {% if s.stage_code == 'CLOSED_WON' %}text-success{% else %}text-primary{% endif %}">
+                                {{ s.total_revenue|floatformat:0 }} đ
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = {{ stage_labels_json|safe }};
+        const counts = {{ stage_counts_json|safe }};
+        const revenues = {{ stage_revenues_json|safe }};
+
+        const ctx = document.getElementById('funnelChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Số lượng cơ hội',
+                        data: counts,
+                        backgroundColor: [
+                            'rgba(13, 110, 253, 0.7)',
+                            'rgba(13, 202, 240, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(253, 126, 20, 0.7)',
+                            'rgba(25, 135, 84, 0.85)',
+                            'rgba(220, 53, 69, 0.6)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y', // Biểu đồ ngang dạng phễu
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const rev = revenues[context.dataIndex];
+                                return 'Giá trị: ' + new Intl.NumberFormat('vi-VN').format(rev) + ' VNĐ';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

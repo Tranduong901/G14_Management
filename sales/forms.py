@@ -6,9 +6,10 @@ from catalog.models import Product, Customer
 class SalesOrderForm(forms.ModelForm):
     class Meta:
         model = SalesOrder
-        fields = ['customer', 'payment_method', 'notes']
+        fields = ['customer', 'warehouse', 'payment_method', 'notes']
         widgets = {
             'customer': forms.Select(attrs={'class': 'form-select'}),
+            'warehouse': forms.Select(attrs={'class': 'form-select'}),
             'payment_method': forms.Select(attrs={'class': 'form-select'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ghi chú cho đơn hàng...'}),
         }
@@ -42,4 +43,3 @@ class OrderCompleteForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'}),
         label="Xác nhận phương thức thanh toán"
     )
-

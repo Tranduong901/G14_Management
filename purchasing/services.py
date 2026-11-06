@@ -36,6 +36,9 @@ def complete_purchase_receipt(receipt, user):
     PurchaseReceipt.objects.select_for_update().get(pk=receipt.pk)
     receipt.refresh_from_db()
 
+    if receipt.warehouse and receipt.warehouse.branch_id and user and not user.can_access_branch(receipt.warehouse.branch):
+        raise ValidationError("Bạn không có quyền nhập hàng vào kho thuộc chi nhánh này.")
+
     if receipt.status == ReceiptStatus.COMPLETED:
         raise ValidationError(f"Phiếu nhập {receipt.code} đã ở trạng thái Hoàn tất trước đó.")
     if receipt.status == ReceiptStatus.CANCELLED:
@@ -87,6 +90,7 @@ def complete_purchase_receipt(receipt, user):
                     product=product,
                     status=ItemStatus.IN_STOCK,
                     purchase_receipt=receipt,
+                    warehouse=receipt.warehouse,
                     warranty_months=12,
                     created_by=user
                 )
@@ -99,6 +103,7 @@ def complete_purchase_receipt(receipt, user):
             transaction_type=TransactionType.IN,
             product=product,
             quantity=qty,
+            warehouse=receipt.warehouse,
             reference_code=receipt.code,
             notes=f"Nhập kho từ NCC: {receipt.supplier.name}",
             created_by=user

@@ -4,14 +4,14 @@
 **Học phần:** Quản trị Hệ thống Thông tin  
 **Nhóm thực hiện:** Nhóm 14  
 **Công nghệ:** Django 6.1.2 + PostgreSQL / psycopg + Django Test Framework
-**Thời gian thực thi:** 28/10/2026  
-**Kết quả tổng quan:** **14/14 TEST CASES ĐẠT (100% PASSED)**
+**Thời gian của log lịch sử:** 28/10/2026
+**Kết quả hiện tại:** Chưa xác minh lại toàn bộ test trong môi trường an toàn
 
 ---
 
 ## 1. TỔNG QUAN KẾT QUẢ THỰC THI KIỂM THỬ
 
-Lệnh thực thi kiểm thử:
+Lệnh thực thi được ghi trong log lịch sử:
 ```bash
 python g14_system\manage.py test tests
 ```
@@ -29,7 +29,22 @@ Found 14 test(s).
 System check identified no issues (0 silenced).
 ```
 
-Tất cả 14 ca kiểm thử bắt buộc theo yêu cầu đặc tả nghiệp vụ và quy tắc BR01 – BR22 đều được thực thi tự động và vượt qua thành công với kết quả **OK**.
+Log lịch sử ghi nhận 14 ca kiểm thử của thời điểm 28/10/2026 đạt **OK**. Đây
+không phải kết quả xác minh mới cho toàn bộ bộ test hiện tại.
+
+Trong source hiện tại có 39 method `test_`:
+
+| Nhóm file | Số test |
+|---|---:|
+| `test_all_requirements.py` | 14 |
+| `test_control_metrics.py` | 3 |
+| `test_phase1_approvals_branch.py` | 3 |
+| `test_phase2_hr_and_payroll.py` | 5 |
+| `test_phase4_crm.py` | 4 |
+| `test_phase5_regressions.py` | 10 |
+| **Tổng** | **39** |
+
+Chưa ghi PASS cho 25 test bổ sung vì chưa có log chạy tương ứng.
 
 ---
 
@@ -109,8 +124,19 @@ Tất cả 14 ca kiểm thử bắt buộc theo yêu cầu đặc tả nghiệp 
 
 ---
 
-## 4. KẾT LUẬN & ĐÁNH GIÁ NGHIỆM THU
+## 4. KẾT QUẢ XÁC MINH LẠI VÀ GIỚI HẠN
 
-1. **Tính đúng đắn của nghiệp vụ:** Hệ thống thực hiện chính xác các luồng liên phân hệ (Bán hàng, Nhập hàng, Kho, Serial/IMEI, Bảo hành, Sổ quỹ, Công nợ, SCM và DSS).
-2. **Tính toàn vẹn dữ liệu:** Toàn bộ các thao tác đa bảng được bảo vệ bằng transaction, không để lại dữ liệu rác hay trạng thái dở dang khi xảy ra lỗi.
-3. **Tuân thủ quy định quản trị:** Đáp ứng 100% các quy tắc từ BR01 đến BR22 theo Báo cáo nghiệp vụ G14.
+Trong lần rà soát hiện tại, `.env` cấu hình `DATABASE_URL` tới PostgreSQL
+Render và chưa có database test cô lập được xác nhận. Vì an toàn dữ liệu, chưa
+chạy lại `manage.py test`, migrate, flush, reset hoặc seed. Do đó số PASS,
+FAIL, ERROR, SKIP và thời gian thực thi hiện tại của 39 test đều **chưa xác
+minh**.
+
+`python manage.py check --deploy` đã chạy trong settings dev và phát hiện 6
+cảnh báo cấu hình bảo mật (`W004`, `W008`, `W009`, `W012`, `W016`, `W018`).
+
+## 5. KẾT LUẬN & ĐÁNH GIÁ NGHIỆM THU
+
+1. **Phạm vi kiểm thử:** Log lịch sử đã bao phủ các luồng liên phân hệ (Bán hàng, Nhập hàng, Kho, Serial/IMEI, Bảo hành, Sổ quỹ, Công nợ, SCM và DSS); các nhóm HR, CRM, approval và regression đã có thêm test source hiện tại.
+2. **Tính toàn vẹn dữ liệu:** Các service chính dùng transaction; mức độ bao phủ và kết quả của toàn bộ test hiện tại cần được xác minh lại bằng test database riêng.
+3. **Tuân thủ quy định quản trị:** Không kết luận 100% cho toàn bộ BR01–BR22 khi chưa chạy lại toàn bộ 39 test; kết quả 14 test trong log cũ được giữ như bằng chứng lịch sử.

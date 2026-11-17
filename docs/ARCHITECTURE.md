@@ -33,9 +33,9 @@ Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (T
 +-----------------------------------------------------------------------------------+
 |                            LỚP DỮ LIỆU DÙNG CHUNG (DATA TIER)                     |
 |   - Cơ sở dữ liệu quan hệ dùng chung: PostgreSQL trên Render                      |
-|   - Khóa chính, Khóa ngoại, CHECK và Khóa duy nhất (Unique Constraints)           |
+|   - Khóa chính, Khóa ngoại và Khóa duy nhất (Unique Constraints)                 |
 |   - Khóa dòng bằng select_for_update trong các luồng cập nhật tồn/công nợ         |
-|   - Phục vụ báo cáo BI trực tiếp qua các SQL Views chuẩn bị sẵn                  |
+|   - Phục vụ dashboard và báo cáo qua các service truy vấn Django ORM           |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -43,20 +43,22 @@ Hệ thống G14 Management được xây dựng theo **Kiến trúc ba lớp (T
 
 ## 2. PHÂN RÃ CÁC DJANGO APPS VÀ TRÁCH NHIỆM
 
-Hệ thống được tổ chức thành 12 Django apps nghiệp vụ độc lập, có ranh giới trách nhiệm rõ ràng:
+Hệ thống được tổ chức thành 14 Django apps nghiệp vụ độc lập, có ranh giới trách nhiệm rõ ràng:
 
-1. **`accounts` (FR-01):** Quản lý định danh người dùng (`User`), vai trò (`Role`: ADMIN, QL, BH, KHO, KT), xác thực, phân quyền theo URL và views.
-2. **`hr` (FR-08):** Hồ sơ nhân viên (`Employee`), phòng ban, trạng thái công tác và liên kết tài khoản hệ thống.
-3. **`catalog` (FR-02, FR-03, FR-04):** Danh mục Sản phẩm (`Product`), Khách hàng (`Customer`), Nhà cung cấp (`Supplier`).
-4. **`devices` (FR-11):** Quản lý định danh từng máy theo Serial/IMEI (`ProductItem`), kích hoạt bảo hành điện tử và xử lý đổi trả bảo hành (`WarrantyReturn`).
-5. **`inventory` (FR-07):** Quản lý biến động kho Nhập - Xuất - Tồn (`InventoryTransaction`), kiểm kê và điều chỉnh tồn kho (`StockAdjustment`).
-6. **`purchasing` (FR-06):** Quản lý phiếu nhập hàng (`PurchaseReceipt`, `PurchaseDetail`), đối soát NCC.
-7. **`sales` (FR-05):** Quản lý đơn bán hàng (`SalesOrder`, `SalesOrderDetail`), thanh toán, in hóa đơn.
-8. **`finance` (FR-12, FR-13):** Phân hệ ERP tài chính cơ bản gồm Sổ quỹ thu - chi (`CashLedger`) và Công nợ phải trả NCC (`Payable`, `PayablePayment`).
-9. **`scm` (FR-14, FR-15):** Phân hệ SCM gồm Đề nghị nhập hàng (`PurchaseRequest`), duyệt đề nghị, hồ sơ giá và đánh giá năng lực nhà cung cấp (`SupplierProduct`).
-10. **`dss` (FR-16, FR-17):** Phân hệ DSS hỗ trợ ra quyết định gồm dự báo nhu cầu bán hàng (`ForecastResult`), công thức gợi ý nhập hàng và bộ giải tối ưu hóa ngân sách bằng Google OR-Tools.
-11. **`reports` (FR-09):** Tổng hợp dữ liệu quản trị: Dashboard điều hành, báo cáo doanh thu, tồn kho, mua hàng, phân tích khách hàng.
-12. **`auditlog` (FR-10):** Ghi nhật ký hệ thống toàn diện, truy vết người thực hiện, thời điểm, hành vi và chi tiết thay đổi dữ liệu (BR09).
+1. **`accounts` (FR-01):** Quản lý định danh người dùng (`User`), vai trò (`Role`: ADMIN, QL, BH, KHO, KT, HR), xác thực, phân quyền theo URL và views.
+2. **`approvals`:** Cấu hình workflow và xử lý các yêu cầu phê duyệt nghỉ phép, đề nghị nhập hàng, bảng lương và quy trình chung.
+3. **`hr` (FR-08):** Hồ sơ nhân viên (`Employee`), phòng ban, trạng thái công tác và liên kết tài khoản hệ thống; code còn có chấm công, nghỉ phép và payroll.
+4. **`catalog` (FR-02, FR-03, FR-04):** Danh mục Sản phẩm (`Product`), Khách hàng (`Customer`), Nhà cung cấp (`Supplier`).
+5. **`devices` (FR-11):** Quản lý định danh từng máy theo Serial/IMEI (`ProductItem`), kích hoạt bảo hành điện tử và xử lý đổi trả bảo hành (`WarrantyReturn`).
+6. **`inventory` (FR-07):** Quản lý biến động kho Nhập - Xuất - Tồn (`InventoryTransaction`), kiểm kê, điều chỉnh và chuyển kho.
+7. **`purchasing` (FR-06):** Quản lý phiếu nhập hàng (`PurchaseReceipt`, `PurchaseDetail`), đối soát NCC.
+8. **`sales` (FR-05):** Quản lý đơn bán hàng (`SalesOrder`, `SalesOrderDetail`), thanh toán, in hóa đơn.
+9. **`finance` (FR-12, FR-13):** Phân hệ tài chính cơ bản gồm Sổ quỹ thu - chi (`CashLedger`) và Công nợ phải trả NCC (`Payable`, `PayablePayment`).
+10. **`scm` (FR-14, FR-15):** Phân hệ SCM gồm Đề nghị nhập hàng (`PurchaseRequest`), duyệt đề nghị, hồ sơ giá và đánh giá năng lực nhà cung cấp (`SupplierProduct`).
+11. **`dss` (FR-16, FR-17):** Phân hệ DSS hỗ trợ ra quyết định gồm dự báo nhu cầu bán hàng (`ForecastResult`), công thức gợi ý nhập hàng và bộ giải tối ưu hóa ngân sách bằng Google OR-Tools.
+12. **`reports` (FR-09):** Tổng hợp dữ liệu quản trị: Dashboard điều hành, báo cáo doanh thu, tồn kho, mua hàng, phân tích khách hàng.
+13. **`auditlog` (FR-10):** Ghi nhật ký hệ thống toàn diện, truy vết người thực hiện, thời điểm, hành vi và chi tiết thay đổi dữ liệu (BR09).
+14. **`crm`:** Quản lý Lead, Opportunity, hoạt động chăm sóc và phễu bán hàng; có service chuyển đổi sang Customer và SalesOrder nháp.
 
 ---
 
@@ -136,6 +138,6 @@ Hệ thống loại bỏ hoàn toàn các trang CRUD rời rạc bằng cách x�
 - Khóa ngoại có ràng buộc `on_delete=models.PROTECT` đối với các bảng danh mục quan trọng (sản phẩm, khách hàng, nhà cung cấp) để ngăn chặn việc xóa dữ liệu đang được tham chiếu trong đơn hàng hoặc phiếu nhập.
 - Khóa duy nhất (Unique Constraint) trên: Mã sản phẩm, Mã khách hàng, Mã nhà cung cấp, Mã Serial/IMEI, Mã đơn bán, Mã phiếu nhập, Mã công nợ, Mã đề nghị nhập hàng.
 - Toàn bộ số tiền được lưu bằng kiểu dữ liệu `DecimalField(max_digits=15, decimal_places=2)` để triệt tiêu sai số làm tròn số thực.
-- CHECK constraint tại CSDL kiểm soát số lượng dương, số tiền không âm và `paid_amount <= total_amount` của công nợ.
+- Các quy tắc số lượng dương, số tiền và trạng thái được kiểm tra chủ yếu ở model/form/service; chưa thấy `CheckConstraint` tương ứng trong code hiện tại.
 - `ForecastResult` có unique constraint kết hợp trên `(product, forecast_period)`.
 - `complete_sales_order`, `complete_purchase_receipt` và `pay_payable` khóa bản ghi liên quan bằng `select_for_update()` trong `transaction.atomic()` để tránh cập nhật đồng thời gây trừ tồn hoặc chi trả vượt số dư.

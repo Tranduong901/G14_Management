@@ -15,7 +15,6 @@ G14_Management/
 ├── .env
 ├── .env.example
 ├── README.md
-├── g14_dev.sqlite3              # SQLite fallback/dev database hiện có trong repo
 ├── config/
 │   ├── __init__.py
 │   ├── api.py                   # DRF ViewSet và API dashboard
@@ -28,6 +27,7 @@ G14_Management/
 │       ├── dev.py                # DEBUG=True
 │       └── prod.py               # DEBUG=False và thiết lập bảo mật cơ bản
 ├── accounts/                     # User, role, đăng nhập, decorator phân quyền
+├── approvals/                    # Cấu hình và xử lý workflow phê duyệt
 ├── auditlog/                     # AuditLog, middleware và service ghi nhật ký
 ├── catalog/                      # Product, Customer, Supplier
 ├── devices/                      # ProductItem/Serial-IMEI và bảo hành
@@ -39,9 +39,15 @@ G14_Management/
 ├── reports/                     # dashboard và các báo cáo
 ├── sales/                       # SalesOrder, SalesOrderDetail
 ├── scm/                         # PurchaseRequest và hồ sơ NCC/sản phẩm
+├── crm/                         # Lead, Opportunity, hoạt động và phễu bán hàng
 ├── templates/                   # giao diện Django Templates theo từng app
 ├── tests/
-│   └── test_all_requirements.py # bộ test tích hợp 14 ca
+│   ├── test_all_requirements.py
+│   ├── test_control_metrics.py
+│   ├── test_phase1_approvals_branch.py
+│   ├── test_phase2_hr_and_payroll.py
+│   ├── test_phase4_crm.py
+│   └── test_phase5_regressions.py
 └── docs/
     ├── ARCHITECTURE.md
     ├── TECHNOLOGY_COMPARISON.md
@@ -49,7 +55,7 @@ G14_Management/
     └── SYSTEM_DOCUMENTATION.md  # tài liệu này
 ```
 
-Không tìm thấy file `docker-compose.yml` hoặc `docker-compose.yaml` trong repository. Vì vậy việc chạy MySQL hiện được hướng dẫn theo dịch vụ MySQL cài trên máy Windows, không phải theo container.
+Không tìm thấy file `docker-compose.yml` hoặc `docker-compose.yaml` trong repository. Cấu hình hiện tại của `config/settings/base.py` yêu cầu PostgreSQL qua `DATABASE_URL`; không có cấu hình MySQL/SQLite fallback trong source hiện tại.
 
 ### 1.2. Các app Django và file chính
 
@@ -79,7 +85,7 @@ Các app cụ thể:
 | `reports` | Dashboard và báo cáo | `services.py`, `views.py` |
 | `auditlog` | Nhật ký và middleware audit | `models.py`, `services.py`, `middleware.py`, `views.py` |
 
-`config/urls.py` đăng ký cả URL HTML của 12 app và API DRF tại `/api/v1/`. `config/settings/base.py` là cấu hình trung tâm; `dev.py` và `prod.py` chỉ thay đổi một phần thiết lập môi trường.
+`config/urls.py` đăng ký URL HTML của 14 app và API DRF tại `/api/v1/`. `config/settings/base.py` là cấu hình trung tâm; `dev.py` và `prod.py` thay đổi thiết lập môi trường.
 
 ## 2. Môi trường và thư viện
 
@@ -87,21 +93,20 @@ Các app cụ thể:
 
 | Thành phần | Hiện trạng |
 |---|---|
-| Python đang được VS Code/Pylance chọn | **3.14** (`Python314\python.exe`) |
-| Django được README và test report ghi nhận | **6.1.2** |
+| Python đã kiểm tra trong môi trường hiện tại | **3.12.8** |
+| Django đã kiểm tra trong môi trường hiện tại | **6.1.2** |
 | Khoảng Django trong `requirements.txt` | `>=5.1.0,<6.2.0` |
-| Cơ sở dữ liệu mục tiêu | MySQL 8.x / MariaDB, engine InnoDB, charset `utf8mb4` |
-| Driver MySQL | PyMySQL `>=1.1.0` |
-| Cơ sở dữ liệu fallback | SQLite, file `g14_dev.sqlite3` |
+| Cơ sở dữ liệu mục tiêu | PostgreSQL qua biến `DATABASE_URL`, SSL mặc định `require` |
+| Driver PostgreSQL | `psycopg[binary] >=3.2.0` |
 | API | Django REST Framework `>=3.15.0` |
 
-README ghi Python 3.12, trong khi interpreter hiện tại được phát hiện là Python 3.14. Đây là hai thông tin khác nhau: Python 3.12 là phiên bản được tài liệu dự án mô tả, còn Python 3.14 là interpreter đang được môi trường VS Code chọn tại thời điểm rà soát.
+Phiên bản Python/Django nêu trên là kết quả kiểm tra môi trường hiện tại; `requirements.txt` không khóa phiên bản Python.
 
 ### 2.2. `requirements.txt`
 
 ```text
 Django>=5.1.0,<6.2.0
-PyMySQL>=1.1.0
+psycopg[binary]>=3.2.0
 djangorestframework>=3.15.0
 python-dotenv>=1.0.0
 ortools>=9.10.0
@@ -114,25 +119,13 @@ Không có Celery, Redis client, `django-celery-beat`, `kombu` hoặc thư việ
 
 ### 2.3. Cấu hình database
 
-`.env.example` đặt MySQL:
+`.env.example` đặt PostgreSQL:
 
 ```ini
-DB_ENGINE=django.db.backends.mysql
-DB_NAME=g14_db
-DB_USER=root
-DB_PASSWORD=root
-DB_HOST=127.0.0.1
-DB_PORT=3306
+DATABASE_URL=******host/database
 ```
 
-Trong `config/settings/base.py`, nếu `DB_ENGINE` là MySQL, `DB_FALLBACK_SQLITE=True` và cổng MySQL không kết nối được thì hệ thống tự chuyển sang:
-
-```python
-DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
-DATABASES["default"]["NAME"] = BASE_DIR / "g14_dev.sqlite3"
-```
-
-Khi dùng MySQL, cấu hình khởi tạo có `charset=utf8mb4`, strict mode và `default_storage_engine=INNODB`. Không có file Docker Compose để tự khởi tạo MySQL.
+`config/settings/base.py` ném lỗi nếu `DATABASE_URL` không được đặt, phân tích URL để cấu hình PostgreSQL và tự thêm `sslmode=require` nếu chưa có.
 
 ## 3. Mô hình dữ liệu
 
@@ -275,7 +268,7 @@ Ràng buộc One-to-one:
 - Payable liên kết PurchaseReceipt dùng `PROTECT`; PayablePayment liên kết Payable dùng `CASCADE`.
 - CashLedger.reversal_of dùng `SET_NULL`.
 
-### 4.3. CHECK và optimistic locking
+### 4.3. Ràng buộc và optimistic locking
 
 - Không tìm thấy `models.CheckConstraint`, `CheckConstraint`, `UniqueConstraint` hoặc `RunSQL` tạo CHECK trong các model/migration hiện tại.
 - `choices` chỉ là ràng buộc ở tầng Django/model form; không được khai báo thành CHECK constraint ở database.
@@ -334,7 +327,7 @@ Các transaction này bảo đảm rollback khi service ném `ValidationError`. 
 
 ### 6.2. Khóa hàng và kiểm tra version
 
-- Không tìm thấy `select_for_update()` trong code.
+- `select_for_update()` có trong các service hoàn tất bán hàng, nhập hàng và thanh toán công nợ để khóa các bản ghi liên quan trong transaction.
 - Không có `version` field và không có kiểm tra version.
 - Do đó, các luồng đọc tồn rồi cập nhật ProductItem/InventoryTransaction chưa thể hiện cơ chế khóa pessimistic hoặc optimistic locking rõ ràng.
 - Tính “idempotent” hiện tại chủ yếu là kiểm tra trạng thái (`COMPLETED`/`CANCELLED`) và dùng `get_or_create` cho Payable/CashLedger; chưa có khóa idempotency theo request/event.
@@ -343,7 +336,7 @@ Các transaction này bảo đảm rollback khi service ném `ValidationError`. 
 
 ### 7.1. Vai trò đang có
 
-`accounts.Role` khai báo 5 vai trò:
+`accounts.Role` khai báo 6 vai trò:
 
 | Mã | Ý nghĩa | Quyền nghiệp vụ theo thiết kế |
 |---|---|---|
@@ -352,8 +345,9 @@ Các transaction này bảo đảm rollback khi service ném `ValidationError`. 
 | `BH` | Nhân viên bán hàng | Sản phẩm, khách hàng, đơn bán, serial/bảo hành liên quan |
 | `KHO` | Nhân viên kho | Nhập kho, serial/IMEI, kiểm kê, đề nghị nhập |
 | `KT` | Kế toán | Sổ quỹ, công nợ, thanh toán và đối soát |
+| `HR` | Nhân sự | Hồ sơ nhân viên, chấm công, nghỉ phép và bảng lương |
 
-`seed_data` tạo 5 tài khoản demo: `admin`, `quanly`, `banhang`, `kho`, `ketoan`.
+`seed_data` tạo các tài khoản demo cho các vai trò nghiệp vụ; danh sách cụ thể cần đối chiếu trực tiếp với command tại thời điểm triển khai.
 
 ### 7.2. Cơ chế thực thi
 
@@ -375,12 +369,16 @@ Django vẫn có các bảng mặc định `auth_group`, `auth_permission` và q
 
 ### 8.1. Bộ test đã có
 
-`tests/test_all_requirements.py` chứa lớp `G14SystemComprehensiveTestCase`. `docs/TEST_REPORT.md` ghi nhận lần chạy ngày 28/10/2026:
+`tests/test_all_requirements.py` chứa lớp `G14SystemComprehensiveTestCase`. Ngoài ra repository hiện có các nhóm test approval/branch, control metrics, HR/payroll, CRM và regression; tổng cộng 39 method `test_` được phát hiện trong source.
 
 ```text
 Ran 14 tests in 43.645s
 OK
 ```
+
+Đoạn log trên là kết quả lịch sử được lưu trong tài liệu cũ, không phải kết quả
+thực thi mới của toàn bộ 39 test. Xem [TEST_REPORT.md](TEST_REPORT.md) để biết
+trạng thái xác minh hiện tại.
 
 Các nhóm chức năng đã được kiểm thử:
 
@@ -407,16 +405,16 @@ Các hạng mục sau chưa được triển khai hoặc chưa có bằng chứn
 
 - `outbox_event`, `idempotency_key`, `process_outbox` và event handlers.
 - Celery, Redis và worker bất đồng bộ.
-- `select_for_update`, cột `version` và optimistic/pessimistic concurrency control.
+- Cột `version` và optimistic locking; một số service đã dùng `select_for_update` nhưng chưa phải mọi luồng cập nhật đều có cơ chế khóa đồng nhất.
 - CHECK constraints ở database cho các điều kiện số lượng, số tiền và trạng thái.
-- Cấu hình `docker-compose.yml` cho MySQL và các dịch vụ phụ trợ.
+- Cấu hình `docker-compose.yml` cho PostgreSQL và các dịch vụ phụ trợ.
 - Seed Django Groups/Permissions; hiện chỉ seed User role.
 - Bộ test concurrency, khóa hàng, retry event, duplicate request và crash giữa commit/dispatch.
 - Cơ chế retry/dead-letter/monitoring cho tích hợp bất đồng bộ.
 
 ### 8.3. Các điểm cần lưu ý khi triển khai
 
-- README mô tả MySQL là database chính nhưng `base.py` có thể tự fallback sang SQLite nếu MySQL không chạy; cần kiểm tra `DB_FALLBACK_SQLITE` khi triển khai production.
+- `base.py` yêu cầu `DATABASE_URL` PostgreSQL; cần cung cấp biến môi trường và kiểm tra SSL khi triển khai production.
 - `requirements.txt` dùng khoảng phiên bản, không khóa chính xác phiên bản; nên dùng lock file nếu cần tái lập môi trường.
 - Mật khẩu demo và `SECRET_KEY` trong `.env.example` chỉ phù hợp cho môi trường học tập/dev, không dùng nguyên trạng ở production.
 - Những quy tắc đang chỉ kiểm tra tại service nên vẫn cần bổ sung ràng buộc database hoặc cơ chế khóa nếu hệ thống chạy đồng thời nhiều worker/request.

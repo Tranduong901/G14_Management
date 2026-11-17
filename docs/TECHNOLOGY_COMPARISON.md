@@ -48,7 +48,7 @@ ERPNext là hệ thống ERP mã nguồn mở hàng đầu thế giới được
 
 ### 2.2. Thử nghiệm thực tế bài toán tối ưu hóa nhập hàng bằng OR-Tools trong G14
 
-G14 đã triển khai thành công bài toán **Quy hoạch tuyến tính số nguyên hỗn hợp (Mixed-Integer Programming - MIP)** trong module `dss.services.optimize_procurement_ortools`.
+G14 đã triển khai mã nguồn bài toán **Quy hoạch tuyến tính số nguyên hỗn hợp (Mixed-Integer Programming - MIP)** trong module `dss.services.optimize_procurement_ortools`. Kết quả số liệu cụ thể chỉ được coi là kết quả thực nghiệm khi có log chạy tương ứng.
 
 #### Mô hình toán học:
 - **Biến quyết định:** $x_i \in \mathbb{Z}_{\ge 0}$ là số lượng sản phẩm $i$ cần nhập.
@@ -62,7 +62,7 @@ G14 đã triển khai thành công bài toán **Quy hoạch tuyến tính số n
   3. Mức tối thiểu cho các sản phẩm đang có tồn kho dưới ngưỡng an toàn:
      $$x_i \ge 1 \quad (\text{với các mặt hàng tồn thấp})$$
 
-#### Kết quả thực nghiệm với ngân sách 50.000.000 VNĐ:
+#### Kết quả thực nghiệm được ghi nhận trong tài liệu cũ với ngân sách 50.000.000 VNĐ:
 - **Trạng thái Solver:** `OPTIMAL` (Thuật toán SCIP / CBC tìm thấy nghiệm tối ưu toàn cục).
 - **Phân bổ tối ưu:**
   - Nhập 02 chiếc iPad Pro M4 (SP04) (Vốn: 42.000.000 đ | Lợi nhuận kỳ vọng: 7.980.000 đ)
@@ -85,9 +85,9 @@ G14 đã triển khai thành công bài toán **Quy hoạch tuyến tính số n
 | **Tự động hóa & Nhúng** | Yêu cầu license Power BI Pro/Premium để nhúng (Power BI Embedded). | Rất dễ nhúng trực tiếp qua Iframe có ký token JWT vào giao diện Web Django. |
 | **Chi phí** | Bản Desktop miễn phí, chia sẻ báo cáo yêu cầu 10$/user/tháng. | Miễn phí hoàn toàn với bản Community self-hosted. |
 
-### 3.2. Chuẩn bị truy vấn SQL / View phục vụ kết nối BI trực tiếp từ PostgreSQL G14
+### 3.2. Ví dụ truy vấn SQL / View tham khảo cho kết nối BI
 
-Hệ thống G14 chuẩn bị sẵn các câu lệnh SQL View tối ưu hóa phục vụ kết nối BI (Power BI & Metabase) để truy vấn không làm ảnh hưởng tới hiệu năng bảng giao dịch:
+Các câu lệnh dưới đây là ví dụ tham khảo được lưu trong tài liệu; không tìm thấy migration, model, script hoặc cấu hình trong repository tạo các SQL View này. Dashboard hiện tại dùng `reports.services` và Chart.js.
 
 #### View 1: Phân tích Doanh thu và Lợi nhuận bán hàng theo ngày & nhóm hàng (`v_bi_sales_performance`)
 ```sql
@@ -172,8 +172,8 @@ GROUP BY s.id, s.code, s.name, s.payment_terms_days;
 - **Đã tích hợp thực tế trong hệ thống G14:**
   - **Google OR-Tools:** Đã tích hợp trực tiếp mã nguồn vào backend `dss/services.py` và có giao diện web tương tác `dss/optimizer/` chạy giải toán trực tiếp.
   - **Chart.js:** Đã tích hợp trực tiếp trên Dashboard điều hành và các trang báo cáo, hiển thị biểu đồ xu hướng doanh thu, cơ cấu nhóm hàng và tỷ lệ thực tế.
-  - **SQL BI Views:** Đã chuẩn hóa và xây dựng cấu trúc SQL sẵn sàng cho cổng kết nối PostgreSQL Render (Port 5432).
+  - **SQL BI Views:** Mới ở mức ví dụ/định hướng; chưa có bằng chứng được tạo trong database hoặc triển khai như một tích hợp BI.
 - **Mức độ nghiên cứu & chuẩn bị:**
   - **ERPNext:** Nghiên cứu kiến trúc, so sánh chức năng và thiết lập mô hình tích hợp dữ liệu qua REST API.
   - **frePPLe:** Nghiên cứu đối sánh với OR-Tools để chọn giải pháp tối ưu cho chuỗi phân phối.
-  - **Power BI & Metabase:** Đã chuẩn bị đầy đủ các bảng dữ liệu tổng hợp và script SQL View phục vụ kết nối trực tiếp khi doanh nghiệp triển khai server BI chuyên dụng.
+  - **Power BI & Metabase:** Là phương án nghiên cứu/mở rộng; chưa có connector, dashboard hoặc script SQL View được triển khai trong repository.

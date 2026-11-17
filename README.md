@@ -20,15 +20,16 @@ Hệ thống thông tin quản trị doanh nghiệp toàn diện phục vụ chu
 
 ## 2. DANH SÁCH TÀI KHOẢN DEMO HỆ THỐNG
 
-Hệ thống đã chuẩn bị sẵn 5 tài khoản tương ứng với 5 vai trò phân quyền nghiệp vụ độc lập:
+Hệ thống đã chuẩn bị sẵn 6 tài khoản tương ứng với 6 vai trò phân quyền nghiệp vụ độc lập:
 
 | Tên đăng nhập | Mật khẩu mặc định | Vai trò (Role) | Chức danh mẫu | Quyền hạn chính trong hệ thống |
 | :--- | :--- | :---: | :--- | :--- |
-| `admin` | `admin123` | **ADMIN** | Quản trị hệ thống | Quản trị tài khoản, phân quyền, xem toàn bộ nhật ký hệ thống (Audit Log). |
-| `quanly` | `admin123` | **QL** | Giám đốc điều hành | Xem Dashboard điều hành, xem báo cáo doanh thu, phê duyệt đề nghị nhập hàng (SCM), phê duyệt kiểm kê kho, phân tích DSS. |
-| `banhang` | `admin123` | **BH** | Chuyên viên bán hàng | Tra cứu sản phẩm, quản lý khách hàng, lập đơn bán hàng, chỉ định Serial/IMEI, tiếp nhận bảo hành. |
-| `kho` | `admin123` | **KHO** | Trưởng kho thiết bị | Nhập hàng, khai báo Serial/IMEI, kiểm kê điều chỉnh kho, lập đề nghị nhập hàng (SCM). |
-| `ketoan` | `admin123` | **KT** | Kế toán trưởng | Xem doanh thu bán hàng, quản lý sổ quỹ thu - chi, theo dõi công nợ NCC, chi trả nợ và đối soát tài chính. |
+| `admin` | `admin123` | **ADMIN** | Quản trị hệ thống | Quản trị tài khoản, phân quyền, cấu hình chi nhánh, xem toàn bộ nhật ký hệ thống (Audit Log). *Bị chặn xem lương nếu không có cờ `can_view_payroll`*. |
+| `quanly` | `admin123` | **QL** | Giám đốc điều hành | Xem Dashboard điều hành toàn hệ thống, xem báo cáo doanh thu, phê duyệt đề nghị nhập hàng (SCM), phê duyệt kiểm kê kho, phê duyệt bảng lương, phân tích DSS. |
+| `banhang` | `admin123` | **BH** | Chuyên viên bán hàng | Tra cứu sản phẩm, quản lý Lead/Cơ hội CRM, lập đơn bán hàng, chỉ định Serial/IMEI, tiếp nhận bảo hành, xem phiếu lương cá nhân. |
+| `kho` | `admin123` | **KHO** | Trưởng kho thiết bị | Nhập hàng, khai báo Serial/IMEI, kiểm kê điều chỉnh kho, điều chuyển kho nội bộ, lập đề nghị nhập hàng (SCM). |
+| `ketoan` | `admin123` | **KT** | Kế toán trưởng | Xem doanh thu bán hàng, quản lý sổ quỹ thu - chi, theo dõi công nợ NCC, chi trả nợ, duyệt bảng lương và thực hiện chi lương ra sổ quỹ. |
+| `nhansu` | `admin123` | **HR** | Quản trị nhân sự | Quản lý hồ sơ nhân viên (D1), hợp đồng lao động, chấm công thủ công (D2), phê duyệt đơn nghỉ phép, lập và tính toán bảng lương (D3). |
 
 ---
 
@@ -43,29 +44,41 @@ g14_system/
 ├── README.md
 ├── config/
 │   ├── settings/
-│   │   ├── base.py
-│   │   ├── dev.py
-│   │   └── prod.py
-│   ├── urls.py
-│   ├── api.py
+│   │   ├── base.py       # Cấu hình trung tâm, kết nối Render PostgreSQL
+│   │   ├── dev.py        # Thiết lập môi trường phát triển
+│   │   └── prod.py       # Thiết lập môi trường Production (Render Web Service)
+│   ├── urls.py           # Định tuyến URL trung tâm cho 14 app và REST API
+│   ├── api.py            # DRF ViewSet & API Dashboard
 │   ├── wsgi.py
 │   └── asgi.py
-├── accounts/         # FR-01: Tài khoản, phân quyền RBAC
-├── catalog/          # FR-02, 03, 04: Sản phẩm, Khách hàng, NCC
-├── hr/               # FR-08: Quản lý nhân viên
-├── sales/            # FR-05: Đơn bán hàng, thanh toán, in hóa đơn
-├── purchasing/       # FR-06: Phiếu nhập hàng, kiểm soát IMEI
-├── inventory/        # FR-07: Kho hàng, lịch sử xuất nhập, kiểm kê
-├── devices/          # FR-11: Quản lý Serial/IMEI, bảo hành, đổi mới
-├── finance/          # FR-12, 13: ERP Sổ quỹ thu chi, công nợ NCC
-├── scm/              # FR-14, 15: SCM Đề nghị nhập, đánh giá NCC
-├── dss/              # FR-16, 17: DSS Dự báo SMA, gợi ý nhập, OR-Tools
-├── reports/          # FR-09: Executive Dashboard, 6 nhóm báo cáo
-├── auditlog/         # FR-10: Nhật ký hệ thống & truy vết
-├── templates/        # Giao diện tiếng Việt chuẩn Bootstrap 5
-├── static/           # Tài nguyên tĩnh CSS, JS
-├── tests/            # Test suite 14 ca kiểm thử bắt buộc
-└── docs/             # Tài liệu kiến trúc, so sánh công nghệ, test report
+├── accounts/         # FR-01: Tài khoản, phân quyền RBAC, Chi nhánh (Branch), DataScope, Scoping
+├── approvals/        # Approval Engine: Cấu hình quy trình & phê duyệt đa bước (LEAVE, SCM, PAYROLL)
+├── catalog/          # FR-02, 03, 04: Sản phẩm, Khách hàng, NCC, Nhóm hàng
+├── crm/              # CRM cơ bản: Quản lý Lead, Cơ hội bán hàng, Hoạt động chăm sóc & Phễu bán hàng
+├── devices/          # FR-11: Quản lý Serial/IMEI, bảo hành điện tử, đổi mới 1-1
+├── dss/              # FR-16, 17: DSS Dự báo nhu cầu SMA-3M, gợi ý nhập hàng, tối ưu hóa OR-Tools
+├── finance/          # FR-12, 13: ERP Sổ quỹ thu chi (CashLedger), Công nợ NCC (Payable)
+├── hr/               # FR-08, 26: HR mở rộng D1 (Hồ sơ, HĐLĐ), D2 (Chấm công thủ công, Phép), D3 (Tính lương)
+├── inventory/        # FR-07, 24: Kho hàng (Warehouse), Biến động xuất nhập, Kiểm kê, Chuyển kho
+├── purchasing/       # FR-06, 24: Phiếu nhập hàng, kiểm soát IMEI nhập về, đối soát NCC
+├── reports/          # FR-09: Executive Dashboard, 6 nhóm báo cáo quản trị, chỉ tiêu TC01-TC29
+├── sales/            # FR-05, 24: Đơn bán hàng đa chi nhánh, thanh toán, in hóa đơn
+├── scm/              # FR-14, 15: SCM Đề nghị nhập hàng, phê duyệt SCM, hồ sơ giá NCC
+├── auditlog/         # FR-10: Nhật ký hệ thống toàn diện, truy vết dữ liệu & chống xâm nhập
+├── templates/        # Giao diện tiếng Việt chuẩn Bootstrap 5.3 theo 14 app
+├── static/           # Tài nguyên tĩnh CSS, JavaScript
+├── tests/            # Bộ kiểm thử tự động toàn diện 39 ca kiểm thử (100% Passed)
+│   ├── test_all_requirements.py        # 14 ca kiểm thử tích hợp liên phân hệ cốt lõi
+│   ├── test_control_metrics.py         # 3 ca kiểm thử số liệu kiểm soát điều hành TC01-TC29
+│   ├── test_phase1_approvals_branch.py # 3 ca kiểm thử Engine phê duyệt & Phân quyền chi nhánh
+│   ├── test_phase2_hr_and_payroll.py   # 5 ca kiểm thử Nghiệp vụ HR D1, D2, D3 & Bảo mật lương
+│   ├── test_phase4_crm.py              # 4 ca kiểm thử Pipeline CRM, hoạt động & phễu bán hàng
+│   └── test_phase5_regressions.py      # 10 ca kiểm thử kiểm soát biên, đa kho và hồi quy
+└── docs/             # Tài liệu kiến trúc, so sánh công nghệ, test report, tài liệu hiện trạng
+    ├── ARCHITECTURE.md          # Tài liệu kiến trúc 3 lớp, service layer và luồng liên phân hệ
+    ├── TECHNOLOGY_COMPARISON.md # Nghiên cứu ERPNext, frePPLe/OR-Tools, BI Metabase/Power BI
+    ├── TEST_REPORT.md           # Báo cáo chi tiết 39 ca kiểm thử thực thi trên PostgreSQL staging
+    └── SYSTEM_DOCUMENTATION.md  # Tài liệu hiện trạng & audit toàn diện (FR-18~26, QT16~23, TC30~40)
 ```
 
 ---
@@ -122,7 +135,23 @@ coi đề nghị ở trạng thái chờ duyệt quá 48 giờ là quá hạn.
 ```powershell
 python manage.py test tests
 ```
-*Kết quả mong đợi: `Ran 14 tests ... OK (100% Passed)`.*
+*Kết quả đã xác minh ngày 06/11/2026: `Ran 39 tests ... OK`.*
+
+### Kiểm thử PostgreSQL staging trên Render
+- Chỉ chạy `migrate` với `DATABASE_URL` của database staging đã xác minh; không chạy
+  `flush`, `reset_db`, `seed_data` hoặc thao tác ghi dữ liệu production.
+- Kiểm tra migration và schema:
+  ```powershell
+  python manage.py showmigrations --plan
+  python manage.py migrate --noinput
+  python manage.py check
+  python manage.py makemigrations --check
+  ```
+- Chạy test trên database kiểm thử tách biệt của staging:
+  ```powershell
+  python manage.py test --keepdb
+  ```
+- Không đưa `DATABASE_URL` lên Git hoặc chia sẻ URL có thông tin xác thực.
 
 ### Bước 7: Khởi động máy chủ Web Django
 ```powershell
@@ -196,3 +225,59 @@ Trong Environment của Render, bắt buộc cấu hình `DATABASE_URL`, `SECRET
    `Gợi ý = Dự báo + Tồn tối thiểu - Tồn khả dụng - Đã duyệt chưa về`.
 5. Vào **Tối ưu OR-Tools**: Nhập hạn mức ngân sách (ví dụ: `50.000.000 đ`) &rarr; Bấm **Chạy tối ưu hóa**.
 6. Hệ thống hiển thị kế hoạch phân bổ số lượng nhập tối ưu từng sản phẩm nhằm tối đa hóa lợi nhuận kỳ vọng dưới hạn mức ngân sách được cấp.
+
+### Kịch bản 6: Quản trị Nhân sự, Chấm công thủ công & Tính - Chi lương (Vai trò: `nhansu`, `quanly`, `ketoan`)
+1. Đăng nhập bằng tài khoản `nhansu` / `admin123`.
+2. Vào **Quản trị Nhân sự** &rarr; **Hồ sơ nhân viên**: Xem và quản lý hợp đồng lao động, thông tin CCCD, bảo hiểm, ngân hàng và người phụ thuộc (D1).
+3. Vào **Bảng chấm công**: Nhập giờ vào/ra thủ công cho nhân viên theo ca; hệ thống tự động kiểm tra chống trùng lặp; nếu chỉnh sửa công, hệ thống yêu cầu lý do và ghi nhận vào `AttendanceAuditLog` (D2).
+4. Vào **Đơn xin nghỉ phép**: Tạo và duyệt đơn nghỉ phép; hệ thống tự động kiểm tra quota và trừ số ngày phép còn lại.
+5. Vào **Bảng lương** &rarr; Bấm **Tạo bảng lương tháng**:
+   - Hệ thống tự động tính lương cố định, phụ cấp, hoa hồng doanh số bán hàng từ F04, khấu trừ bảo hiểm 10.5%, giảm trừ gia cảnh và tính thuế TNCN theo biểu lũy tiến từng phần 7 bậc (D3).
+6. Bấm **Trình phê duyệt** (duyệt qua 2 cấp: Quản lý duyệt &rarr; Kế toán duyệt) &rarr; Bấm **Khóa bảng lương**.
+7. Đăng nhập tài khoản `ketoan` &rarr; Bấm **Xác nhận chi lương**: Hệ thống tự động sinh bút toán Chi vào Sổ quỹ `CashLedger` (F08).
+8. Đăng nhập tài khoản `banhang` &rarr; Vào **Phiếu lương của tôi**: Chỉ xem được phiếu lương của chính mình, bảo đảm bảo mật tuyệt đối.
+
+### Kịch bản 7: Quản trị Quan hệ Khách hàng CRM & Chuyển đổi F04 (Vai trò: `banhang`)
+1. Đăng nhập tài khoản `banhang` / `admin123`.
+2. Vào **CRM** &rarr; **Khách hàng tiềm năng (Lead)**: Bấm **Tạo Lead mới** (nhập nguồn tiếp cận, thông tin liên hệ).
+3. Tại chi tiết Lead, bấm **Thêm hoạt động**: Ghi nhận cuộc gọi tư vấn, lịch gặp gỡ hoặc gửi báo giá.
+4. Bấm **Chuyển thành Cơ hội bán hàng**: Chọn giai đoạn đàm phán, xác suất thành công và doanh thu dự kiến.
+5. Khi đàm phán thành công (Stage: `CLOSED_WON`), bấm **Chuyển đổi sang Bán hàng (F04)**:
+   - Hệ thống tự động tạo hồ sơ Khách hàng chính thức trong danh mục (`catalog.Customer`).
+   - Tự động khởi tạo Đơn bán hàng Nháp (`sales.SalesOrder`) kế thừa thông tin và chuyển sang phân hệ F04 để chốt đơn và xuất kho.
+6. Vào **Phễu bán hàng (Sales Funnel)**: Xem biểu đồ trực quan Chart.js phân tích tỷ lệ chuyển đổi qua các giai đoạn.
+
+### Kịch bản 8: Quản lý Đa chi nhánh, Đa kho & Chuyển kho nội bộ (Vai trò: `kho`, `admin`)
+1. Đăng nhập tài khoản `admin` / `admin123`.
+2. Vào menu cấu hình Chi nhánh và Kho hàng: Hệ thống quản lý các chi nhánh (Hà Nội, TP.HCM, Đà Nẵng) và các kho vật lý trực thuộc.
+3. Người dùng thuộc chi nhánh nào chỉ thấy dữ liệu và kho thuộc chi nhánh đó (Branch Scoping qua `accounts.scoping.get_scoped_queryset`).
+4. Đăng nhập tài khoản `kho` / `admin123` &rarr; Vào **Tồn kho & Chuyển kho**:
+   - Chọn kho xuất (ví dụ: `Kho Tổng Hà Nội`) và kho đích (ví dụ: `Kho Chi Nhánh Cầu Giấy`).
+   - Chọn sản phẩm, số lượng và các mã Serial/IMEI cần chuyển &rarr; Bấm **Xác nhận điều chuyển**.
+   - Hệ thống ghi nhận cặp giao dịch xuất `OUT` và nhập `IN`, cập nhật kho cho các thiết bị IMEI, bảo toàn 100% tổng tồn toàn công ty mà không phát sinh doanh thu hay công nợ.
+
+---
+
+## 6. TỔNG HỢP HIỆN TRẠNG KIỂM THỬ VÀ ĐỐI CHIẾU ĐẶC TẢ
+
+Hệ thống đã trải qua rà soát toàn diện mã nguồn đối chiếu với bộ đặc tả kỹ thuật và nghiệp vụ:
+
+- **Kết quả Kiểm thử tự động:** **39/39 Test Cases ĐẠT (100% PASSED)** thực thi trên nền tảng PostgreSQL (`test_g14_management` với cờ `--keepdb`).
+- **Phân hệ hoàn thiện (DONE):**
+  - Quản lý đa chi nhánh và đa kho (FR-24, QT21, TC36).
+  - Phân hệ Quản trị nhân sự và Tiền lương mở rộng D1, D2, D3 (FR-26, QT23, TC39).
+  - Động cơ phê duyệt đa bước có thể cấu hình (`approvals`).
+  - Phân hệ Quản trị quan hệ khách hàng và Phễu bán hàng (`crm`).
+  - 14 yêu cầu cốt lõi (FR-01 đến FR-17), 22 quy tắc nghiệp vụ (BR01 đến BR22) và 29 chỉ tiêu kiểm soát điều hành (TC01 đến TC29).
+- **Phân hệ triển khai một phần (PARTIAL):**
+  - Đổi trả & hoàn tiền (FR-23, QT20, TC34): Đã có bảo hành đổi mới 1-1 cho thiết bị IMEI, chưa có đổi trả thương mại hoàn tiền.
+  - Tham số hệ thống (FR-18): Các giá trị cấu hình đang phân tán dưới dạng hằng số, chưa có bảng tham số tập trung.
+  - Báo cáo chi nhánh (TC37): Dữ liệu chi nhánh đã có trên đơn bán, cần bổ sung hàm nhóm hiển thị riêng trên dashboard.
+- **Phân hệ chưa triển khai (MISSING) theo lộ trình đề xuất (P1 - P3):**
+  - Công nợ phải thu khách hàng (FR-20, QT16, TC32, TC33).
+  - Bán hàng online & Cổng thanh toán (FR-21, QT19, TC35).
+  - Quản lý giao vận và vận chuyển (FR-22, QT18, TC30, TC31).
+  - Kế toán tổng hợp Double-Entry GL (FR-19, QT17, TC38).
+  - Tích hợp EDI với nhà cung cấp (FR-25, QT22, TC40).
+
+*Chi tiết toàn bộ kết quả rà soát, bảng ma trận và kiến trúc được ghi nhận tại thư mục `docs/`: [`SYSTEM_DOCUMENTATION.md`](docs/SYSTEM_DOCUMENTATION.md), [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`TEST_REPORT.md`](docs/TEST_REPORT.md) và [`TECHNOLOGY_COMPARISON.md`](docs/TECHNOLOGY_COMPARISON.md).*
